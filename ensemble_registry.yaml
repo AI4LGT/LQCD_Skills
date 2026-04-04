@@ -1,0 +1,77 @@
+# Ensemble Registry
+#
+# This is NOT a skill — it is a data source that skills query.
+# Fill in your actual ensemble parameters below.
+# Keep one entry per ensemble.
+
+ensembles:
+  - id: "C24P29"
+    description: "N_f=2+1, 24^3 x 72, Symanzik tree-level improved gauge action, tree-level improved clover fermions"
+
+    # --- Lattice geometry ---
+    dimensions: [24, 24, 24, 72]
+    boundary_conditions:
+      spatial: "periodic"
+      temporal: "anti-periodic" # for fermions
+
+    # --- Gauge action ---
+    gauge_action: "symanzik_tree"
+    beta: 6.20
+    tadpole: 0.855453
+
+    # --- Scale setting ---
+    lattice_spacing:
+      method: "symanzik_flow_w0"
+      value: 0.10530 # fm
+      error: 0.00018 # fm
+
+    # --- Configurations ---
+    config_dir: "/public/ensemble/C24P29/"
+    config_format: "chroma_qio" # ildg, qio, milc, nersc, ...
+    config_prefix: "beta6.20_mu-0.2770_ms-0.2400_L24x72_cfg_"
+    config_suffix: ".lime"
+    available_configs:
+      start: 10000
+      stop: 46000
+      step: 3000
+
+    # --- Quark parameters (for this ensemble) ---
+    quarks:
+      light:
+        action: "clover"
+        mass: -0.2770
+        csw: 1.160920226
+        smearing:
+          type: "stout"
+          iterations: 1
+          rho: 0.125
+          ndim: 4
+        tol: 1e-10
+        maxiter: 1000
+        multigrid:
+          geo_block_size: [[6, 6, 6, 3]]
+        critical_mass: -0.28560
+      strange:
+        action: "clover"
+        mass: -0.2400
+        csw: 1.160920226
+        smearing:
+          type: "stout"
+          iterations: 1
+          rho: 0.125
+          ndim: 4
+        tol: 1e-10
+        maxiter: 1000
+        multigrid: null
+      charm:
+        action: "clover"
+        mass: -0.1200
+        csw: 1.160920226
+        smearing:
+          type: "stout"
+          iterations: 1
+          rho: 0.125
+          ndim: 4
+        tol: 1e-10
+        maxiter: 1000
+        multigrid: null
