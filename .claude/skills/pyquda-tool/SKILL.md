@@ -29,13 +29,31 @@ that reads gauge configurations and produces propagator data files.
 
 ### Step 0: Common conventions
 
-PyQUDA is designed to run in an MPI environment where each rank corresponds to a GPU. Make sure to launch your script using `mpirun` or `mpiexec` with the appropriate number of processes. In most situations (on a cluster), you should launch the job with a job scheduler (e.g. SLURM, PBS) that handles the allocation of resources and the launching of MPI jobs. Sometimes you might need the binding script to bind each MPI rank to a specific NUMA node, GPU, and NIC.
+PyQUDA is a Python wrapper of the QUDA library, which provides GPU-accelerated operations for lattice QCD. PyQUDA uses NumPy arrays to handle lattice fields, and uses CuPy/PyTorch/DPNP arrays when GPU accelerated linear algebra is needed. PyQUDA is designed to run on cluster environment which have a job scheduler like SLURM or PBS, thus it usually runs in an MPI environment. There are some key concepts to understand when using the package:
 
-PyQUDA uses the even-odd (red-black) preconditioning, so the lattice is effectively halved in the x-dimension. For example, the propagator data will have a shape of (2, Lt, Lz, Ly, Lx // 2, Ns, Ns, Nc, Nc), where the first dimension corresponds to the even/odd parity. The spin-color indices are ordered as (spin_snk, spin_src, color_snk, color_src). Make sure to verify the source spin-color index ordering when performing contractions for correlators.
+#### Grid
 
-PyQUDA uses a bit-field encoding for gamma matrices, where `gamma(1)` corresponds to γ₁, `gamma(2)` to γ₂, `gamma(4)` to γ₃, and `gamma(8)` to γ₄. Products of gamma matrices can be represented using bitwise OR. For example, `gamma(15)` corresponds to γ₁γ₂γ₃γ₄ = γ₅.
+Grid in PyQUDA indicates how to partition the lattice across multiple MPI ranks, which is very close to the concept of a Cartesion communicator. For example, a grid size of `[2, 2, 1, 1]` means that the lattice will be partitioned into 4 sublattices in the x and y dimensions, while the z and t dimensions are not partitioned. The product of the grid dimensions must equal the total number of MPI ranks used to run the job. If one dimension is partitioned, there will be communication between MPI ranks in that dimension during the solver iterations. If the grid size is not specified, but the targeting lattice size is provided during the initialization, PyQUDA will automatically generate a grid size, trying to minimize the communication between different MPI ranks.
 
-PyQUDA provides consistant API to support array linear algebra operations on GPU. You can check `pyquda_comm.array` for the supported array backends and supported operations. The `backend` parameter in `core.init` determines which array library is used for handling lattice fields. Using the `"cupy"` or `"dpnp"` backend can provide GPU acceleration for operations such as contractions to correlators, while the `"numpy"` backend can be used for CPU computations or when GPU memory is limited.
+#### Device
+
+Device in PyQUDA refers to the local GPU device ID that each MPI rank will use. By default, PyQUDA will assign GPU devices based on the local rank of each MPI process. For example, if you have 4 GPUs and 4 MPI ranks, each rank will be assigned to a different GPU (rank 0 to GPU 0, rank 1 to GPU 1, etc.). Sometimes, a cluster will offer a binding script to bind each MPI rank to a specific NUMA node, GPU, and NIC, and environment variables such as `CUDA_VISIBLE_DEVICES` are usually set by the script. You will have to set `enable_mps=True` during the initialization in this situation to allow all ranks in one node can use the same GPU ID 0, although they are actually using different devices.
+
+#### Lattice information
+
+`LatticeInfo` class in PyQUDA is used to store the lattice information, including the lattice dimensions, boundary conditions, and anisotropy. Assuiming the global lattice size is `[GLx, GLy, GLz, GLt]`, the grid size is `[Gx, Gy, Gz, Gt]`, and the local lattice size for each MPI rank is `[Lx, Ly, Lz, Lt]`, where `Lx = GLx // Gx`, `Ly = GLy // Gy`, `Lz = GLz // Gz`, and `Lt = GLt // Gt`. The `LatticeInfo` object is used to initialize the Dirac operator and to create lattice fields, ensuring that all operations are consistent with the lattice geometry and partitioning.
+
+#### Lattice fields
+
+Lattice fields are objects in PyQUDA to handle the data of fields used in LQCD. For example, the gauge field is hold by a `LatticeGauge` object, and the quark propagator is hold by a `LatticePropagator` object. The `data` attribute of these objects is a `numpy.ndarray` (or `cupy.ndarray`/`torch.Tensor`/`dpnp.ndarray` array if using GPU acceleration) that contains the actual field data. The layout of the field data is `[2, Lt, Lz, Ly, Lx // 2]`, which is the even-odd preconditioned layout. The first dimension of size 2 corresponds to the parity (even/odd) of the lattice sites, and the last dimension of size `Lx // 2` corresponds to the half-lattice size in the x direction due to the even-odd preconditioning. Note the order of dimensions is "xyzt" in most cases in PyQUDA, except for the data layout of a field (which is "tzyx"). If a filed has both source and sink spin/color indices, the order will always be `[snk, src]`. For example, the shape of a `LatticePropagator.data` will be `[2, Lt, Lz, Ly, Lx // 2, Ns, Ns, Nc, Nc]`, and the meaning of each dimension is `[parity, t, z, y, x//2, spin_snk, spin_src, color_snk, color_src]`. The `LatticeGauge.data` will have a shape of `[4, 2, Lt, Lz, Ly, Lx // 2, Nc, Nc]`, where the additional dimension of size 4 corresponds to the four directions of the gauge links.
+
+#### Array location
+
+PyQUDA can handle arrays in different locations (CPU or GPU) with different backends (NumPy, CuPy, PyTorch, DPNP). The `backend` parameter in the initialization determines which array library is used for handling lattice fields by default. If `backend="cupy"` is set, PyQUDA will create a CuPy array for the field data when creating a `LatticeGauge` or `LatticePropagator` object. But remember if a `LatticeGauge` or `LatticePropagator` is created by loading from disk, the field data will always be created as a NumPy array on CPU, and you will have to use the `toDevice()` to transfer the data to GPU memory. PyQUDA provides a consistent API to support array linear algebra operations on GPU with backends. You can check `pyquda_comm.array` module for the supported operations. It's clear that using the `"numpy"` backend will keep all arrays on CPU, saving GPU memory but without acceleration.
+
+#### Gamma matrices
+
+The basis for the gamma matrices provided by `pyquda_utils.gamma` module is the DeGrand-Rossi basis. PyQUDA uses a bit-field encoding for gamma matrices, where `gamma.gamma(1)` corresponds to γ₁, `gamma.gamma(2)` to γ₂, `gamma.gamma(4)` to γ₃, and `gamma.gamma(8)` to γ₄. Products of gamma matrices can be represented using bitwise OR. For example, `gamma.gamma(15)` corresponds to γ₁γ₂γ₃γ₄ = γ₅.
 
 ### Step 1: Load ensemble metadata
 
@@ -54,7 +72,7 @@ latt_size = [Lx, Ly, Lz, Lt] # lattice dimensions
 core.init(grid_size, latt_size, backend="cupy", resource_path="/path/to/quda/tunecache")
 latt_info = core.LatticeInfo(latt_size, t_boundary=-1, anisotropy=1.0)
 ```
-Here we initialize the PyQUDA context with the MPI, and set the lattice partitioning `grid_size`, and then create a `LatticeInfo` object with the lattice dimensions `latt_size`. The `latt_size` in `core.init` will be ignored if `grid_size` is specified, and the MPI size must be equal to the product of `grid_size`. PyQUDA will automatically generate a `grid_size` if only `latt_size` is provided, trying to minimize the communication between different MPI ranks. The `t_boundary=-1` indicates anti-periodic boundary conditions in time, and `anisotropy=1.0` indicates no anisotropy (use a different value if using an anisotropic lattice). The `backend` parameter specifies which Array API we should use to handle lattice fields. `"cupy"` backend could be helpful for GPU acceleration in the "contraction to correlator" step. The `resource_path` is where PyQUDA will look for tuning cache files. Note that if the existing tuning cache is generated by another version of QUDA, you might need to relocate the directory and retune to avoid potential issues with incompatible launching parameters.
+Here we initialize the PyQUDA context with the MPI, and set the lattice partitioning `grid_size`, and then create a `LatticeInfo` object with the lattice dimensions `latt_size`. The `latt_size` in `core.init` will be ignored if `grid_size` is specified, and the MPI size must be equal to the product of `grid_size`. PyQUDA will automatically generate a `grid_size` if only `latt_size` is provided, trying to minimize the communication between different MPI ranks. The `t_boundary=-1` indicates anti-periodic boundary conditions in time, and `anisotropy=1.0` indicates no anisotropy (use `xi_0 / nu` if using an anisotropic lattice, where `xi_0` is the gauge anisotropy and `nu` is the input light speed). The `backend` parameter specifies which Array API we should use to handle lattice fields. `"cupy"` backend could be helpful for GPU acceleration in the "contraction to correlator" step. The `resource_path` is where PyQUDA will look for tuning cache files. Note that if the existing tuning cache is generated by another version of QUDA, you might need to relocate the directory and retune to avoid potential issues with incompatible launching parameters.
 
 ### Step 3: Load gauge configuration
 
@@ -63,7 +81,7 @@ from pyquda_utils import io
 
 gauge = io.readChromaQIOGauge("/path/to/gauge/configuration")
 ```
-Here we load the gauge configuration from disk using the appropriate loader function based on the file format. The `loadChromaQIOGauge` function is used for ILDG/QIO formatted files. Make sure to replace the path with the actual location of your gauge configuration. You can read the PyQUDA source code to determine which loader function to use for other formats (e.g. `loadMILCGauge` for MILC format).
+Here we load the gauge configuration from disk using the appropriate read function based on the file format. The `readChromaQIOGauge` function is used for Chroma generated QIO formatted files. Make sure to replace the path with the actual location of your gauge configuration. You can read the PyQUDA source code to determine which read function to use for other formats (e.g. `readMILCGauge` for MILC format).
 
 ### Step 4: Configure quark and solver parameters
 
@@ -73,7 +91,7 @@ from pyquda_utils import core
 
 dirac = core.getWilson(latt_info, mass, tol, maxiter, multigrid)
 ```
-Here we create a Wilson Dirac operator with the specified mass, solver tolerance, maximum iterations, and multigrid settings. `multigrid` should be the parameter to determine the aggregation size of every level. If `multigrid` is `None`, BiCGStab is used.
+Here we create a Wilson Dirac operator with the specified mass, solver tolerance, maximum iterations, and multigrid settings. `multigrid` should be the parameter to determine the aggregation size of every level. If `multigrid` is `None`, BiCGStab is used. These parameters should be set according to the requirements of your calculation. For example, for light quarks, you might need a smaller mass and a looser solver tolerance, while for heavy quarks, you can use a larger mass and a tighter tolerance to ensure the accuracy in timeslices far from the source. The multigrid is usually very helpful for light quark propagators, because of the critical slowing down issue of LQCD.
 
 #### Clover fermion:
 ```python
@@ -81,7 +99,7 @@ from pyquda_utils import core
 
 dirac = core.getClover(latt_info, mass, tol, maxiter, xi_0, csw_t, csw_r, multigrid)
 ```
-Here we create a Clover Dirac operator with the specified mass, solver tolerance, maximum iterations, gauge anisotropy parameter `xi_0`, clover coefficients `csw_t` and `csw_r`, and multigrid settings. Note that `csw_t` and `csw_r` are the clover coefficients for the temporal and spatial components, respectively. If your lattice is isotropic, you can set `csw_t = csw_r = csw`. `xi_0` is the gauge anisotropy parameter, please clarify it from the fermion anisotropy `xi = xi_0 / nu`.
+Here we create a Clover Dirac operator with the specified mass, solver tolerance, maximum iterations, gauge anisotropy `xi_0`, clover coefficients `csw_t` and `csw_r`, and multigrid settings. Note that `csw_t` and `csw_r` are the clover coefficients for the temporal and spatial components, respectively. If your lattice is isotropic, you can set `csw_t = csw_r = csw`. `xi_0` is the gauge anisotropy,  please clarify it from the fermion anisotropy `xi = xi_0 / nu`.
 
 #### Load all required fields into GPU memory:
 ```python
@@ -92,7 +110,7 @@ with dirac.useGauge(gauge):
     # Do something
     ...
 ```
-Here we first apply stout smearing to the gauge field with 1 iteration, smearing parameter `rho`, and 4-dimensional smearing. This might be necessary if you found quarks.smearing in the ensemble registry. You can read the PyQUDA source code to determine the appropriate smearing algorithm and parameters. Then we use the `useGauge` context manager to ensure that the gauge field is loaded into GPU memory and available for the Dirac operator. Inside this context, you can perform operations that require access to the gauge field, such as constructing sources or solving for propagators.
+Here we first apply 4-dimentional stout smearing of parameter `rho` to the gauge field for 1 time. This might be necessary to calculate the propagator if you found quarks.smearing in the ensemble registry. You can read the PyQUDA source code to determine the appropriate smearing algorithm and parameters. Then we use the `useGauge` context manager to ensure that the gauge field and all auxiliary fields are loaded into QUDA. Inside this context, you can solve quark propagators defined by the Dirac operator. If mutliple context managers are nested, the innermost one will take effect. `useGauge` is not a free operation, it will trigger the data transfer between CPU and GPU if the gauge field is not already on GPU, and it will also trigger the reorder operion to convert the gauge field data into the layout required by QUDA. So it's better to put all the operations that require the gauge field inside the same `useGauge` context to avoid unnecessary data transfer and reordering.
 
 ### Step 5: Construct source and solve propagator
 
@@ -107,7 +125,7 @@ with dirac.useGauge(gauge):
   propag_wl = core.invert(dirac, "wall", t0, phase.data)
   propag_vl = core.invert(dirac, "volume", None, phase.data)
 ```
-Here we call the `invert` function to solve for the propagator using different source types. For a point source, we specify the position `[x0, y0, z0, t0]`. For a wall source, we specify the time slice `t0`. For a volume source, no additional parameters are needed. Here we also apply a momentum phase to the source, which is important for computing momentum-space propagators. If no `phase` is given, the values for all three types will default to 1 (zero momentum).
+Here we call the `invert` function to solve for the propagator using different source types. For a point source, we specify the position `[x0, y0, z0, t0]`. For a wall source, we specify the time slice `t0`. For a volume source, no additional parameters are needed. Here we also apply a momentum phase to the source, which is necessary for computing momentum wall source propagators. If no `phase` is given, the values for all three types will default to 1.
 
 #### Solve propagator from an existing propagator:
 ```python
@@ -119,6 +137,15 @@ with dirac.useGauge(gauge):
   propag_sh = core.invertPropagator(dirac, source_sh)
 ```
 Here we first create a point source propagator using the `source.propagator` function. Then we apply Gaussian smearing to this source using the `source.gaussianSmear` function, which takes the original source, the gauge field, the smearing radius in the momentum space `rho`, and the number of smearing steps `n_steps`. Note the gauge we used here for the gaussian smearing might be different from the one used for the Dirac operator, depending on the requirements. Finally, we solve for the smeared propagator using the `core.invertPropagator` function.
+
+#### Solve sequential propagator from an existing propagator on a specific time slice:
+```python
+from pyquda_utils import core
+
+with dirac.useGauge(gauge):
+  propag_sq = core.invertSequential(dirac, propag_sh, t_seq)
+```
+Here we use the `core.invertSequential` function to solve for a sequential propagator from the smeared propagator. This is useful for three-point correlator calculations where we need to insert an operator at a specific time slice. The `t_seq` parameter specifies the time slice where the sequential source is defined.
 
 ### Step 6: Save propagator (optional)
 This is not always necessary, but you can save the propagator to disk in a format of your choice (e.g. HDF5, NumPy binary) for later analysis.
