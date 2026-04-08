@@ -1,14 +1,16 @@
 ---
 name: pyquda-tool
 description: >
-  PyQUDA tool usage skill. Use whenever you need to generate code that calls
-  PyQUDA to solve quark propagators on lattice gauge configurations. Covers:
-  configuration loading, quark parameter setup (Wilson/clover action, kappa or
-  mass, clover coefficient), multigrid solver configuration, source construction
-  (point, Gaussian smearing with APE/HYP links), propagator inversion, and
-  residual verification. Trigger on any request to "compute propagators",
-  "run inversions", "call PyQUDA", or when S1 (lqcd-physics) has produced a
-  propagator requirements list.
+  PyQUDA tool usage skill. Generates Python code that calls PyQUDA to solve
+  quark propagators on lattice gauge configurations. Covers: configuration
+  loading, quark parameter setup
+  (Wilson/clover action, mass or kappa, clover coefficient, link smearing),
+  multigrid solver configuration, source construction (point, Gaussian
+  smearing with APE/HYP/stout links), propagator inversion, and residual
+  verification. Reads ensemble parameters from ensemble_registry.yaml.
+  Trigger on: "compute propagators", "solve propagator", "run inversions",
+  "call PyQUDA", "solve Dirac equation", or when lqcd-physics has produced
+  a propagator requirements list.
 ---
 
 # PyQUDA Tool Usage
