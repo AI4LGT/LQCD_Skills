@@ -23,6 +23,16 @@ Take raw correlator data C(t) measured on N_cfg gauge configurations and
 extract physics results (masses, amplitudes, matrix elements, form factors)
 with controlled statistical and systematic uncertainties.
 
+## Code style
+
+Generated analysis code should be a **flat, self-contained script** with all parameters (file paths, fit ranges, number of states, lattice dimensions, lattice spacing, etc.) hardcoded as plain variables at the top. Write the script to read top-to-bottom so a collaborator can immediately see and verify every analysis choice. This is standard practice in lattice QCD: analysis scripts are shared between collaborators for cross-checking, not maintained as reusable software. Command-line arguments (argparse) may be used sparingly for parameters that distinguish independent runs, but physical and analysis parameters must remain hardcoded in the file.
+
+**Inline vs. function**: Data processing operations that carry physical meaning (source-time shifting, correlator folding, sign corrections, momentum projection averaging, etc.) should be written **inline** in the script, not wrapped in utility functions. This makes the physics reasoning visible at the point where it happens — a collaborator can immediately see *why* a roll or sign flip occurs. The exception is **fit model functions** (e.g., `make_c2_model`): lsqfit requires a callable, so these must be defined as functions. Note that the code examples in this skill document the algorithm as functions for clarity, but when generating actual scripts, inline the data processing steps.
+
+## Input data
+
+This skill takes **pre-computed correlator data** from disk as input: per-configuration correlator data (e.g., HDF5 files containing C(t) for each config and source time). Single-configuration data has no physical meaning — only ensemble-averaged quantities with statistical errors carry physical significance. Never include propagator computation or gauge configuration loading in an analysis script.
+
 ## Workflow overview
 
 ```

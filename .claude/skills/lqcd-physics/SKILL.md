@@ -338,6 +338,8 @@ practice, break it into smaller contractions to reduce computational cost.
 | Disconnected diagrams needed     | Stochastic volume sources (Z₂/Z₄) |
 | Form factor / 3pt function       | Sequential source or stochastic    |
 
+**Multiple source times**: Computing propagators from multiple source time slices per configuration (e.g., `t_src = 0, T/4, T/2, 3T/4`) multiplies the effective statistics and improves the signal-to-noise ratio, especially for baryons and excited states. Each source time yields an independent correlator measurement after shifting to `t_src = 0`. The "4 sources/config" in the table above refers to 4 different source time positions. When determining propagator requirements, **ask the user** to confirm the source type, smearing, positions, and number of source times, as the optimal choice depends on the target observable and available computational budget.
+
 ## Common pitfalls
 
 1. **Forgetting disconnected diagrams**: Flavor-singlet mesons (η, η', σ)
@@ -357,5 +359,5 @@ practice, break it into smaller contractions to reduce computational cost.
    number of quarks:
      Mesons:  (-1)² = +1 → C(t) ∝ e^{-mt} + e^{-m(T-t)}  (cosh-like)
      Baryons: (-1)³ = -1 → backward state has opposite parity
-   See the Spectral Decomposition section above and lqcd-analysis for the
-   fit function templates.
+   See the Spectral Decomposition section above for the fit function
+   templates.
