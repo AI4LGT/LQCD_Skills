@@ -19,6 +19,8 @@ description: >
 
 Translate a propagator specification into executable PyQUDA code
 that reads gauge configurations and produces propagator or correlator data files.
+This skill generates a **data production script only** — a single script that
+computes and saves per-configuration results. It does not produce analysis code.
 
 ## Prerequisites
 
@@ -34,6 +36,22 @@ that reads gauge configurations and produces propagator or correlator data files
 **Always run with MPI**: PyQUDA scripts must be launched via MPI, e.g. `mpirun -np 4 python script.py` or `srun -n 4 python script.py` on SLURM clusters. Even single-GPU runs use `mpirun -np 1`. The number of MPI ranks must equal the product of grid_size dimensions, with one GPU per MPI rank by default. Always include a comment at the top of the generated script showing the expected launch command, e.g. `# Run: mpirun -np 4 python this_script.py`.
 
 **Heavy computation — no interactive monitoring**: PyQUDA propagator inversions are computationally intensive and typically run for minutes to hours per configuration. Do not add progress bars, interactive prompts, or suggest frequent status checking. QUDA prints solver iteration counts and residuals to stdout automatically — the user monitors progress via stdout or log redirection. Submit the script and let it run to completion.
+
+## Before generating code (REQUIRED)
+
+Do NOT generate any computation code until the following are resolved. Present the information gathered in step 1 to the user, then ask the questions in step 2 and wait for answers.
+
+**Step 1 — Physics derivation**: The propagator requirements must be known before writing code. Use lqcd-physics reasoning to derive: what interpolating operators are needed, what the Wick contraction looks like, and which propagators (quark flavors, source→sink structure) are required. Present this derivation to the user.
+
+**Step 2 — Ask the user** to confirm or specify the following source configuration, as the optimal choice depends on the target observable and computational budget:
+
+- **Source type**: point, wall, smeared (Gaussian/Wuppertal), or volume
+- **Smearing**: whether to apply Gaussian smearing to the source, and if so, the smearing parameters (radius `rho`, number of steps `n_steps`) and which gauge field to use for smearing
+- **Source positions**: spatial position(s) `[x0, y0, z0]` and time slices `t_src`. Using multiple source time slices (e.g., `t_src = 0, T//4, T//2, 3*T//4`) on each configuration significantly improves the signal-to-noise ratio by multiplying the effective statistics
+
+Momentum projection is **not** a user choice — it is determined by the correlator definition. If the target observable requires momentum $\vec{p}$, the source must be projected to that momentum accordingly.
+
+**Step 3 — Generate code** only after the user has confirmed the source configuration.
 
 ## Workflow
 
@@ -157,15 +175,7 @@ with dirac.useGauge(gauge):
 ```
 Here we use the `core.invertSequential` function to solve for a sequential propagator from the smeared propagator. This is useful for three-point correlator calculations where we need to insert an operator at a specific time slice. The `t_seq` parameter specifies the time slice where the sequential source is defined.
 
-#### Source configuration (ask the user)
-
-Before writing the computation script, **ask the user** to specify the source configuration, as it depends on the target physics observable:
-
-- **Source type**: point, wall, smeared (Gaussian/Wuppertal), or volume
-- **Smearing**: whether to apply Gaussian smearing to the source, and if so, the smearing parameters (radius `rho`, number of steps `n_steps`) and which gauge field to use for smearing
-- **Source positions**: spatial position(s) `[x0, y0, z0]` and time slices `t_src`. Using multiple source time slices (e.g., `t_src = 0, T//4, T//2, 3*T//4`) on each configuration significantly improves the signal-to-noise ratio by multiplying the effective statistics
-
-Momentum projection is **not** a user choice — it is determined by the correlator definition from lqcd-physics. If the target observable requires momentum $\vec{p}$, the source must be projected to that momentum accordingly.
+#### Multiple source times
 
 Structure the main computation as a loop over source times when multiple sources are used:
 

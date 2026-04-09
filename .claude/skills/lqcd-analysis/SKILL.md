@@ -21,7 +21,9 @@ description: >
 
 Take raw correlator data C(t) measured on N_cfg gauge configurations and
 extract physics results (masses, amplitudes, matrix elements, form factors)
-with controlled statistical and systematic uncertainties.
+with controlled statistical and systematic uncertainties. This skill generates
+an **analysis script only** — it assumes the correlator data already exists
+on disk. It does not produce data generation or propagator computation code.
 
 ## Code style
 
