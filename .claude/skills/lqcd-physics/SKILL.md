@@ -29,12 +29,11 @@ compute.
 
 ### Step 1: Identify the interpolating operator(s)
 
-For a target hadron with quantum numbers $J^{PC}$ and flavor content, write the interpolating operator. Use Dirac bilinears for mesons, and
-appropriate diquark-quark structures for baryons.
+For a target hadron with quantum numbers $J^{PC}$ and flavor content, write the interpolating operator. Use Dirac bilinears for mesons, and appropriate diquark-quark structures for baryons.
 
-For example, the simplest interpolating operator for a $\pi^+$ meson is usually written as $\mathcal{O}_{\pi^+} = \bar{d}^a \gamma_5 u^a$, and the simplest operator for a proton is $\mathcal{O}_p = \epsilon^{abc} (u^a C\gamma_5 d^b) u^c$.
+For example, the simplest interpolating operator for a $\pi^+$ meson is usually written as $\mathcal{O}_{\pi^+} = \bar{d}^a \gamma_5 u^a$, and the simplest operator for a proton is $\mathcal{O}_p = \epsilon^{abc} (u^a C\gamma_5 d^b) u^c$. The simplest local operators are usually sufficient for ground state mass extraction, but interpolating operators can be constructed with gamma matrices and gauge covariant derivatives to access different quantum numbers, excited states, and observables related to hadron structure in general. For example, if we want to compute pion distribution amplitudes, we should use non-local operators with quark fields separated by a Wilson line, e.g. $\mathcal{O}_{\pi^+}(z) = \bar{d}^a(0) \gamma_5 W(0,z) u^a(z)$.
 
-**Convention**: Use the DeGrand-Rossi basis as the Euclidean Dirac basis, which is the default gamma basis in PyQUDA convention:
+**Gamma matrices convention**: Use the DeGrand-Rossi basis as the Euclidean Dirac basis, which is the default gamma basis in PyQUDA convention:
 
 $$
 \gamma_1 = \begin{pmatrix} 0 & i \sigma_1 \nonumber \\ -i \sigma_1 & 0 \end{pmatrix},\quad
@@ -74,9 +73,15 @@ propagators $S_f(x, y)$. Apply:
   → reduces number of distinct propagators needed
 - **Charge conjugation / isospin**: may relate different diagram topologies
 
-See the examples below for a step-by-step demonstration of the Wick contraction process.
+### Step 4: Determine propagator
 
-### Step 4: Determine propagator requirements
+A typical 2-point correlator $C_\pi(\vec{p}; t,0) = \sum_{\vec{x},\vec{y}} e^{-i \vec{p} \cdot (\vec{x} - \vec{y})} \text{Tr}[ S_l^\dagger(\vec{x},t; \vec{y},0) S_l(\vec{x},t; \vec{y},0) ]$ requires summing over both source $\vec{y}$ and sink $\vec{x}$, which is impossible in the real computation. Instead, we usually use point source propagator or wall source propator to estimate the correlator. Sometimes we can also use volume source propagator with stochastic estimation, but this is less common for two-point functions. Gaussian smearing can be applied to all types of sources to enhance ground state overlap, and APE/HYP smearing can be applied to the gauge links used in the source construction to further improve the signal. The choice of source type and smearing parameters depends on the specific observable and the desired balance between computational cost and statistical precision.
+
+**Point source**: We can use a point source at a fixed spatial location and time slice (e.g., $\vec{y} = \vec{y}_0$ at $t=t_0$), set the phase $e^{i\vec{p}\cdot\vec{y}_0}$ at this point, and compute the propagator from this source point to all spatial points at all time slices, namely $S_{l,\text{point}(\vec{p},\vec{y}_0,t_0)}(\vec{x},t)\equiv e^{i\vec{p}\cdot\vec{y}_0}S_l(\vec{x},t;\vec{y}_0,t_0)$. This gives us an estimate of the correlator: $C_\pi(\vec{p}; t,0) \approx \sum_{\vec{x}} e^{-i \vec{p} \cdot \vec{x}} \text{Tr}[ S_{l,\text{point}(\vec{-p}_2,\vec{y}_0,t_0)}^{\dagger}(\vec{x},t) S_{l,\text{point}(\vec{p}_1,\vec{y}_0,t_0)}(\vec{x},t) ]$, where $\vec{p}=\vec{p}_1+\vec{p}_2$. The extra negative sign on $\vec{p}_2$ comes from the conjugate transpose of the propagator. This is how to use point source propagators to calculate the correlator. Note the momentum phase here is only a complex factor, we can just ignore it and set it to 1 without affecting any physical results. Then the momentum index $\vec{0}$ can be eliminated and the correlator estimated can be written as $C_\pi(\vec{p}; t,0) \approx \sum_{\vec{x}} e^{-i \vec{p} \cdot \vec{x}} \text{Tr}[ S_{l,\text{point}(\vec{y}_0,t_0)}^{\dagger}(\vec{x},t) S_{l,\text{point}(\vec{y}_0,t_0)}(\vec{x},t) ]$. For better statistics, we can also use multiple point sources at different spatial locations and time slices, and average the resulting correlators.
+
+**Wall source**: We can also use a wall source that spans the entire spatial volume at a fixed time slice (e.g., $t=t_0$), set the phase $e^{i\vec{p}\cdot\vec{x}}$ for each spatial point, and compute the propagator from this source to all spatial points at all time slices, namely $S_{l,\text{wall}(\vec{p},t_0)}(\vec{x},t)\equiv\sum_{y}e^{i\vec{p}\cdot\vec{y}}S_l(\vec{x},t;\vec{y},t_0)$. This gives us an estimate of the correlator: $C_\pi(\vec{p}; t,0) \approx \sum_{\vec{x}} e^{-i \vec{p} \cdot \vec{x}} \text{Tr}[ S_{l,\text{wall}(\vec{p},t_0)}^{\dagger}(\vec{x},t) S_{l,\text{wall}(\vec{p},t_0)}(\vec{x},t) ]$. For better statistics, we can also use multiple wall sources at different time slices, and average the resulting correlators.
+
+**Volume source**: Generally we do not use volume sources for two-point functions, but they can be used for all-to-all propagator with stochastic estimation. A volume source is defined as $S_{l,\text{volume}(\vec{p},E)}(\vec{x},t)\equiv\sum_{\vec{y},\tau}e^{i(\vec{p}\cdot\vec{y}+E\tau)}S(\vec{x},t;\vec{y},\tau)$, which have the 4-momentum phase at each spatial point and time slice.
 
 Output a list of propagators specifying:
 - Quark flavor / mass parameter
@@ -84,6 +89,22 @@ Output a list of propagators specifying:
 - Source position(s) (time slice, number of sources per configuration)
 - Whether APE/HYP smeared links are used for the source construction
 - Sink treatment (point, smeared, or both → for SS/SP correlator matrix)
+
+---
+
+## Worked examples
+
+See `examples/{pion,rho,proton}.md` for step-by-step demonstrations of the Wick contraction and propagator determination workflow.
+
+**Einsum conventions** (used by all example files): propagators use the
+data layout
+`[parity][t][z][y][x][spin_snk][spin_src][color_snk][color_src]`,
+and the momentum phase $e^{-i\vec{p}\cdot(\vec{x}-\vec{x}_0)}$ has layout
+`[parity][t][z][y][x]`. The `parity` index reflects the even-odd
+preconditioned lattice layout. Einsum contracts over spatial indices
+(`w,z,y,x`) and spin-color indices, leaving only `t`. The hermitian
+conjugate $S^\dagger$ is implemented via `.conj()` with transposed spin
+and color index order (`jiba` instead of `ijab`).
 
 ---
 
@@ -196,135 +217,6 @@ decomposition fully determines the **fit function template**:
 The analysis skill (lqcd-analysis) takes these templates as its fit models,
 using the energy-gap parametrization $E_n = \sum_{k=0}^{n}\Delta E_k$
 with $\Delta E_k > 0$ to ensure proper state ordering.
-
----
-
-## Worked examples
-
-### Einsum conventions
-
-In all examples below, propagators use the data layout
-`[parity][t][z][y][x][spin_snk][spin_src][color_snk][color_src]`,
-and the momentum phase $e^{-i\vec{p}\cdot(\vec{x}-\vec{x}_0)}$ has layout
-`[parity][t][z][y][x]`. The `parity` index reflects the even-odd
-preconditioned lattice layout. Einsum contracts over spatial indices
-(`w,z,y,x`) and spin-color indices, leaving only `t`. The hermitian
-conjugate $S^\dagger$ is implemented via `.conj()` with transposed spin
-and color index order (`jiba` instead of `ijab`).
-
-### Example 1: Pion mass (π⁺ channel)
-
-**Goal**: Extract $m_\pi$
-
-**Step 1 — Operator**:
-  $$\mathcal{O}_{\pi^+} = \bar{d} \gamma_5 u$$
-
-**Step 2 — Correlator**:
-  $$C_\pi(\vec{p}; t,0) = \langle \mathcal{O}_{\pi^+}(\vec{p},t) \mathcal{O}^\dagger_{\pi^+}(\vec{p},0) \rangle$$
-
-**Step 3a - Quark fields**: Expand the operator in terms of quark fields and Fourier transform:
-  $$C_\pi(\vec{p}; t,0) = \sum_{\vec{x},\vec{y}} e^{-i \vec{p} \cdot (\vec{x} - \vec{y})} \langle \bar{d}(\vec{x},t) \gamma_5 u(\vec{x},t) \bar{u}(\vec{y},0) \gamma_4 \gamma_5 \gamma_4 d(\vec{y},0) \rangle$$
-
-**Step 3b — Wick contraction**:
-One connected diagram (no disconnected pieces for charged pion, and the negative sign arises from the anticommutation of fermion fields):
-
-  $$C_\pi(\vec{p}; t,0) = -\sum_{\vec{x},\vec{y}} e^{-i \vec{p} \cdot (\vec{x} - \vec{y})} \text{Tr}[ S_d(\vec{y},0; \vec{x},t) \gamma_5 S_u(\vec{x},t; \vec{y},0) \gamma_4 \gamma_5 \gamma_4 ]$$
-
-**Step 3c - Simplification**:
-  1. Apply the $\gamma_5$-hermiticity and the flavor symmetry:
-  $$C_\pi(\vec{p}; t,0) = - \sum_{\vec{x},\vec{y}} e^{-i \vec{p} \cdot (\vec{x} - \vec{y})} \text{Tr}[ \gamma_5 S_l^\dagger(\vec{x},t; \vec{y},0) \gamma_5 \gamma_5 S_l(\vec{x},t; \vec{y},0) \gamma_4 \gamma_5 \gamma_4 ]$$
-  2. Apply the cyclic property to simplify the gamma matrix structure:
-  $$C_\pi(\vec{p}; t,0) = \sum_{\vec{x},\vec{y}} e^{-i \vec{p} \cdot (\vec{x} - \vec{y})} \text{Tr}[ S_l^\dagger(\vec{x},t; \vec{y},0) S_l(\vec{x},t; \vec{y},0) ]$$
-
-**Step 4 — Propagators needed**:
-We need the light quark propagator $S_l(x,y)$ from all source points to all sink points. To optimize, we usually do not calculate all source points. Instead, we estimate the correlator using a point source at a specific spatial location and time slice ($\vec{y}=\vec{x}_0, t=0$ here) and compute the propagator from this source point to all spatial points at all time slices $S_l(\vec{x},t; \vec{x}_0,0)$.
-$$C_\pi(\vec{p}; t,0) \approx \sum_{\vec{x}} e^{-i \vec{p} \cdot (\vec{x} - \vec{x}_0)} \text{Tr}[ S_l^\dagger(\vec{x},t; \vec{x}_0,0) S_l(\vec{x},t; \vec{x}_0,0) ]$$
-
-**Step 5 — Einsum** (see conventions above):
-```python
-numpy.einsum('wtzyx,wtzyxjiba,wtzyxijab->t', phase, S_l.conj(), S_l)
-```
-
----
-
-### Example 2: Rho meson mass (ρ⁺ channel)
-
-**Goal**: Extract $m_\rho$
-
-**Step 1 — Operator**:
-  $$\mathcal{O}_{\rho^+_i} = \bar{d} \gamma_i u \quad (i = 1, 2, 3 \text{ for the three polarizations})$$
-
-**Step 2 — Correlator**: Average over polarizations for better statistics:
-  $$C_\rho(\vec{p}; t,0) = \frac{1}{3} \sum_i \langle \mathcal{O}_{\rho^+_i}(\vec{p},t) \mathcal{O}^\dagger_{\rho^+_i}(\vec{p},0) \rangle$$
-
-**Step 3a — Quark fields**: Expand the operator in terms of quark fields and Fourier transform:
-  $$C_\rho(\vec{p}; t,0) = \frac{1}{3} \sum_i \sum_{\vec{x},\vec{y}} e^{-i \vec{p} \cdot (\vec{x} - \vec{y})} \langle \bar{d}(\vec{x},t) \gamma_i u(\vec{x},t) \bar{u}(\vec{y},0) \gamma_4 \gamma_i \gamma_4 d(\vec{y},0) \rangle$$
-
-**Step 3b — Wick contraction**:
-Same topology as pion, just replace $\gamma_5 \to \gamma_i$:
-
-  $$C_\rho(\vec{p}; t,0) = -\frac{1}{3} \sum_i \sum_{\vec{x},\vec{y}} e^{-i \vec{p} \cdot (\vec{x} - \vec{y})} \text{Tr}[ S_d(\vec{y},0; \vec{x},t) \gamma_i S_u(\vec{x},t; \vec{y},0) \gamma_4 \gamma_i \gamma_4 ]$$
-
-**Step 3c — Simplification**:
-  1. Apply the $\gamma_5$-hermiticity and the flavor symmetry:
-  $$C_\rho(\vec{p}; t,0) = -\frac{1}{3} \sum_i \sum_{\vec{x},\vec{y}} e^{-i \vec{p} \cdot (\vec{x} - \vec{y})} \text{Tr}[ \gamma_5 S_l^\dagger(\vec{x},t; \vec{y},0) \gamma_5 \gamma_i S_l(\vec{x},t; \vec{y},0) \gamma_4 \gamma_i \gamma_4 ]$$
-  2. Apply the cyclic property to simplify the gamma matrix structure (Unlike the pion case, $\gamma_5 \gamma_i$ do not trivially simplify to identity matrix, you must explicitly perform the spin-color matvec to evaluate the trace):
-  $$C_\rho(\vec{p}; t,0) = \frac{1}{3} \sum_i \sum_{\vec{x},\vec{y}} e^{-i \vec{p} \cdot (\vec{x} - \vec{y})} \text{Tr}[ \gamma_5 S_l^\dagger(\vec{x},t; \vec{y},0) (\gamma_5 \gamma_i) S_l(\vec{x},t; \vec{y},0) \gamma_i \gamma_5 ]$$
-
-**Step 4 — Propagators needed**:
-Same as the pion case, we need the point-source light quark propagator $S_l(\vec{x},t; \vec{x}_0,0)$.
-$$C_\rho(\vec{p}; t,0) \approx \frac{1}{3}\sum_i\sum_{\vec{x}} e^{-i \vec{p} \cdot (\vec{x} - \vec{x}_0)} \text{Tr}[ S_l^\dagger(\vec{x},t; \vec{x}_0,0) \gamma_5\gamma_i S_l(\vec{x},t; \vec{x}_0,0) \gamma_i \gamma_5 ]$$
-
-**Step 5 — Einsum** (see conventions above):
-```python
-numpy.einsum('wtzyx,wtzyxjiba,jk,wtzyxklab,li->t', phase, S_l.conj(), gamma_5 @ gamma_i, S_l, gamma_i @ gamma_5)
-```
-
----
-
-### Example 3: Nucleon mass (proton)
-
-**Goal**: Extract $m_p$
-
-**Step 1 — Operator**:
-  $$\mathcal{O}_{p} = \epsilon^{abc} (u^{Ta} C\gamma_5 d^b) u^c$$
-
-**Step 2 — Correlator**: We also need a positive parity projector to isolate the ground state nucleon:
-  $$C_p(\vec{p}; t,0) = \mathrm{Tr} [P^+ \langle \mathcal{O}_{p}(\vec{p},t) \mathcal{O}^\dagger_{p}(\vec{p},0) \rangle],\;P^+ = \frac{1 + \gamma_4}{2}$$
-
-**Step 3a — Quark fields**: Expand the operator in terms of quark fields and Fourier transform, and we have to write out all spin indices:
-  $$C_p(\vec{p}; t,0) = P^+_{\gamma''\gamma} \sum_{\vec{x}, \vec{y}} e^{-i \vec{p} \cdot (\vec{x} - \vec{y})} \epsilon^{abc} u^a_\alpha(\vec{x},t) (C\gamma_5)_{\alpha\beta} d^b_\beta(\vec{x},t) u^c_\gamma (\vec{x},t) \epsilon^{a'b'c'} \bar{u}^{c'}_{\gamma'}(\vec{y},0) (\gamma_4)_{\gamma'\gamma''} \bar{d}^{b'}_{\beta'}(\vec{y},0) (\gamma_4 \gamma_5 C \gamma_4)_{\beta'\alpha'} \bar{u}^{a'}_{\alpha'}(\vec{y},0)$$
-
-**Step 3b — Wick contraction**:
-Now we have two contraction paths:
-
-  $$C_p(\vec{p}; t,0) = P^+_{\gamma''\gamma} \sum_{\vec{x}, \vec{y}} e^{-i \vec{p} \cdot (\vec{x} - \vec{y})} \epsilon^{abc} \epsilon^{a'b'c'} \\
-  [ S_{u\alpha\alpha'}^{aa'}(\vec{x},t;\vec{y},0) (C\gamma_5)_{\alpha\beta} S_{d\beta\beta'}^{bb'}(\vec{x},t;\vec{y},0) S_{u\gamma\gamma'}^{cc'} (\vec{x},t;\vec{y},0) (\gamma_4)_{\gamma'\gamma''} (\gamma_4 \gamma_5 C \gamma_4)_{\beta'\alpha'} \\
-  -S_{u\alpha\gamma'}^{ac'}(\vec{x},t;\vec{y},0) (C\gamma_5)_{\alpha\beta} S_{d\beta\beta'}^{bb'}(\vec{x},t;\vec{y},0) S_{u\gamma\alpha'}^{ca'} (\vec{x},t;\vec{y},0) (\gamma_4)_{\gamma'\beta'} (\gamma_4 \gamma_5 C \gamma_4)_{\beta'\alpha'} ]$$
-
-**Step 3c — Simplification**:
-  1. Relabel dummy color indices ($a' \leftrightarrow c'$) on the second term; the epsilon antisymmetry cancels the minus sign:
-  $$C_p(\vec{p}; t,0) = P^+_{\gamma''\gamma} \sum_{\vec{x}, \vec{y}} e^{-i \vec{p} \cdot (\vec{x} - \vec{y})} \epsilon^{abc} \epsilon^{a'b'c'} \\
-  [ S_{u\alpha\alpha'}^{aa'}(\vec{x},t;\vec{y},0) (C\gamma_5)_{\alpha\beta} S_{d\beta\beta'}^{bb'}(\vec{x},t;\vec{y},0) S_{u\gamma\gamma'}^{cc'} (\vec{x},t;\vec{y},0) (\gamma_4)_{\gamma'\gamma''} (\gamma_4 \gamma_5 C \gamma_4)_{\beta'\alpha'} \\
-  + S_{u\alpha\gamma'}^{aa'}(\vec{x},t;\vec{y},0) (C\gamma_5)_{\alpha\beta} S_{d\beta\beta'}^{bb'}(\vec{x},t;\vec{y},0) S_{u\gamma\alpha'}^{cc'} (\vec{x},t;\vec{y},0) (\gamma_4)_{\gamma'\beta'} (\gamma_4 \gamma_5 C \gamma_4)_{\beta'\alpha'} ]$$
-  2. Apply the cyclic property to simplify the gamma matrix structure:
-  $$C_p(\vec{p}; t,0) = \sum_{\vec{x}, \vec{y}} e^{-i \vec{p} \cdot (\vec{x} - \vec{y})} \epsilon^{abc} \epsilon^{a'b'c'} (C\gamma_5)_{\alpha\beta} (\gamma_5 C)_{\beta'\alpha'} P^+_{\gamma'\gamma} \\
-  [ S_{l\alpha\alpha'}^{aa'}(\vec{x},t;\vec{y},0) S_{l\beta\beta'}^{bb'}(\vec{x},t;\vec{y},0) S_{l\gamma\gamma'}^{cc'} (\vec{x},t;\vec{y},0) \\
-  + S_{l\alpha\gamma'}^{aa'}(\vec{x},t;\vec{y},0) S_{l\beta\beta'}^{bb'}(\vec{x},t;\vec{y},0) S_{l\gamma\alpha'}^{cc'} (\vec{x},t;\vec{y},0) ]$$
-
-**Step 4 — Propagators needed**:
-Same as the pion case, we need the point-source light quark propagator $S_l(\vec{x},t; \vec{x}_0,0)$.
-  $$C_p(\vec{p}; t,0) \approx \sum_{\vec{x}} e^{-i \vec{p} \cdot (\vec{x} - \vec{x}_0)} \epsilon^{abc} \epsilon^{a'b'c'} (C\gamma_5)_{\alpha\beta} (\gamma_5 C)_{\beta'\alpha'} P^+_{\gamma'\gamma} \\
-  [ S_{l\alpha\alpha'}^{aa'}(\vec{x},t;\vec{x}_0,0) S_{l\beta\beta'}^{bb'}(\vec{x},t;\vec{x}_0,0) S_{l\gamma\gamma'}^{cc'} (\vec{x},t;\vec{x}_0,0) \\
-  + S_{l\alpha\gamma'}^{aa'}(\vec{x},t;\vec{x}_0,0) S_{l\beta\beta'}^{bb'}(\vec{x},t;\vec{x}_0,0) S_{l\gamma\alpha'}^{cc'} (\vec{x},t;\vec{x}_0,0) ]$$
-
-**Step 5 — Einsum** (see conventions above):
-```python
-numpy.einsum('wtzyx,abc,def,ij,kl,mn,wtzyxikad,wtzyxjlbe,wtzyxnmcf,li->t', phase, epsilon, epsilon, C @ gamma_5, C @ gamma_5, P_plus, S_l, S_l, S_l) + numpy.einsum('wtzyx,abc,def,ij,kl,mn,wtzyximad,wtzyxjlbe,wtzyxnkcf,li->t', phase, epsilon, epsilon, C @ gamma_5, C @ gamma_5, P_plus, S_l, S_l, S_l)
-```
-Note: this expression may have an extra minus depending on the transpose
-property of the gamma matrices. The einsum is complex for baryons; in
-practice, break it into smaller contractions to reduce computational cost.
 
 ---
 
