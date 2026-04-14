@@ -26,7 +26,7 @@ ensembles:
       error: 0.00018 # fm
 
     # --- Configurations ---
-    config_dir: "/public/ensemble/C24P29/"
+    config_dir: "/public/share/weiwang/clqcd/beta6.20_mu-0.2770_ms-0.2400_L24x72/Configurations/Original/"
     config_format: "chroma_qio" # ildg, qio, milc, nersc, ...
     config_prefix: "beta6.20_mu-0.2770_ms-0.2400_L24x72_cfg_"
     config_suffix: ".lime"
@@ -49,11 +49,11 @@ ensembles:
         tol: 1e-10
         maxiter: 1000
         multigrid:
-          geo_block_size: [[6, 6, 6, 3]]
+            geo_block_size: [[6, 6, 6, 4], [4, 4, 4, 6]]
         critical_mass: -0.28560
       strange:
         action: "clover"
-        mass: -0.2400
+        mass: -0.2356
         csw: 1.160920226
         smearing:
           type: "stout"

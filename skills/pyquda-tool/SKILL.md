@@ -108,6 +108,7 @@ Here we initialize the PyQUDA context with the MPI, and set the lattice partitio
 from pyquda_utils import io
 
 gauge = io.readChromaQIOGauge("/path/to/gauge/configuration")
+gauge.toDevice()
 ```
 Here we load the gauge configuration from disk using the appropriate read function based on the file format. The `readChromaQIOGauge` function is used for Chroma generated QIO formatted files. Make sure to replace the path with the actual location of your gauge configuration. You can read the PyQUDA source code to determine which read function to use for other formats (e.g. `readMILCGauge` for MILC format).
 
@@ -129,16 +130,23 @@ dirac = core.getClover(latt_info, mass, tol, maxiter, xi_0, csw_t, csw_r, multig
 ```
 Here we create a Clover Dirac operator with the specified mass, solver tolerance, maximum iterations, gauge anisotropy `xi_0`, clover coefficients `csw_t` and `csw_r`, and multigrid settings. Note that `csw_t` and `csw_r` are the clover coefficients for the temporal and spatial components, respectively. If your lattice is isotropic, you can set `csw_t = csw_r = csw`. `xi_0` is the gauge anisotropy,  please clarify it from the fermion anisotropy `xi = xi_0 / nu`.
 
+For ptop-style C24P29 production scripts, keep the solver call form consistent across flavors:
+
+```python
+dirac_l = core.getDirac(latt_info, l_mass, tol, maxiter, 1.0, clover, clover, MG_BLOCK)
+dirac_s = core.getDirac(latt_info, s_mass, tol, maxiter, 1.0, clover, clover, MG_BLOCK)
+```
+
 #### Load all required fields into GPU memory:
 ```python
 from pyquda_utils import core
 
 gauge.stoutSmear(1, rho, 4)
-with dirac.useGauge(gauge):
-    # Do something
-    ...
+dirac.loadGauge(gauge)
+# Do something
+...
 ```
-Here we first apply 4-dimentional stout smearing of parameter `rho` to the gauge field for 1 time. This might be necessary to calculate the propagator if you found quarks.smearing in the ensemble registry. You can read the PyQUDA source code to determine the appropriate smearing algorithm and parameters. Then we use the `useGauge` context manager to ensure that the gauge field and all auxiliary fields are loaded into QUDA. Inside this context, you can solve quark propagators defined by the Dirac operator. If mutliple context managers are nested, the innermost one will take effect. `useGauge` is not a free operation, it will trigger the data transfer between CPU and GPU if the gauge field is not already on GPU, and it will also trigger the reorder operion to convert the gauge field data into the layout required by QUDA. So it's better to put all the operations that require the gauge field inside the same `useGauge` context to avoid unnecessary data transfer and reordering.
+Here we first apply 4-dimentional stout smearing of parameter `rho` to the gauge field for 1 time. This might be necessary to calculate the propagator if you found quarks.smearing in the ensemble registry. You can read the PyQUDA source code to determine the appropriate smearing algorithm and parameters. Then we call `loadGauge` to ensure that the gauge field and all auxiliary fields are loaded into QUDA. In this workspace, generated scripts must use `loadGauge` explicitly and must not use `useGauge`.
 
 ### Step 5: Construct source and solve propagator
 
@@ -148,10 +156,10 @@ from pyquda_utils import core, phase_v2
 
 phase = phase_v2.MomentumPhase(latt_info).getPhase([kx, ky, kz], [x0, y0, z0])
 
-with dirac.useGauge(gauge):
-  propag_pt = core.invert(dirac, "point", [x0, y0, z0, t0], phase.data)
-  propag_wl = core.invert(dirac, "wall", t0, phase.data)
-  propag_vl = core.invert(dirac, "volume", None, phase.data)
+dirac.loadGauge(gauge)
+propag_pt = core.invert(dirac, "point", [x0, y0, z0, t0], phase.data)
+propag_wl = core.invert(dirac, "wall", t0, phase.data)
+propag_vl = core.invert(dirac, "volume", None, phase.data)
 ```
 Here we call the `invert` function to solve for the propagator using different source types. For a point source, we specify the position `[x0, y0, z0, t0]`. For a wall source, we specify the time slice `t0`. For a volume source, no additional parameters are needed. Here we also apply a momentum phase to the source, which is necessary for computing momentum wall source propagators. If no `phase` is given, the values for all three types will default to 1.
 
@@ -159,10 +167,10 @@ Here we call the `invert` function to solve for the propagator using different s
 ```python
 from pyquda_utils import core, source
 
-with dirac.useGauge(gauge):
-  source_pt = source.propagator(latt_info, "point", [x0, y0, z0, t0])
-  source_sh = source.gaussianSmear(source_pt, gauge, rho, n_steps)
-  propag_sh = core.invertPropagator(dirac, source_sh)
+dirac.loadGauge(gauge)
+source_pt = source.propagator(latt_info, "point", [x0, y0, z0, t0])
+source_sh = source.gaussianSmear(source_pt, gauge, rho, n_steps)
+propag_sh = core.invertPropagator(dirac, source_sh)
 ```
 Here we first create a point source propagator using the `source.propagator` function. Then we apply Gaussian smearing to this source using the `source.gaussianSmear` function, which takes the original source, the gauge field, the smearing radius in the momentum space `rho`, and the number of smearing steps `n_steps`. Note the gauge we used here for the gaussian smearing might be different from the one used for the Dirac operator, depending on the requirements. Finally, we solve for the smeared propagator using the `core.invertPropagator` function.
 
@@ -170,8 +178,8 @@ Here we first create a point source propagator using the `source.propagator` fun
 ```python
 from pyquda_utils import core
 
-with dirac.useGauge(gauge):
-  propag_sq = core.invertSequential(dirac, propag_sh, t_seq)
+dirac.loadGauge(gauge)
+propag_sq = core.invertSequential(dirac, propag_sh, t_seq)
 ```
 Here we use the `core.invertSequential` function to solve for a sequential propagator from the smeared propagator. This is useful for three-point correlator calculations where we need to insert an operator at a specific time slice. The `t_seq` parameter specifies the time slice where the sequential source is defined.
 
@@ -222,7 +230,43 @@ Please refer to "lqcd-physics" skills for more details on how to perform contrac
 
 Save correlator data to HDF5 **per configuration**, with metadata sufficient to reproduce the result (source position, momentum, operator type, configuration ID). Make sure only the root rank (rank 0) writes the output file to avoid conflicts. The output should contain correlator data C(t) indexed by configuration and source time.
 
-## Common issues
+For MPI-distributed contractions, apply these execution constraints:
 
-- **GPU out of memory**: Use more GPUs (increase MPI size), use `backend="numpy"` when initializing PyQUDA.
-- **Solver not converging**: Check gauge configuration integrity, try restarting with tighter intermediate tolerance
+- Build per-rank time arrays using local extent `latt_info.Lt`.
+- Call `core.gatherLattice(...)` on **all** MPI ranks.
+- Restrict file write operations (`np.save`, HDF5 write) to rank 0 only.
+- Use phase calls with explicit source origin for reproducibility:
+  - `getPhase([px, py, pz, 0], [ix, iy, iz, 0])`
+  - `getPhase([-px, -py, -pz, 0], [ix, iy, iz, 0])`
+- Prefer contraction backend import order:
+  1. `from pyquda_plugins import pycontract`
+  2. fallback backend only when explicitly requested; print backend name at startup.
+
+## Execution guardrails
+
+- Keep contraction backend deterministic for reproducible outputs:
+  - first choice: `from pyquda_plugins import pycontract`
+  - if another backend is used, print backend name at startup and include it in run logs.
+- Keep array backend consistent inside contractions (all operands as CuPy arrays on GPU paths).
+- Normalize operands before `contract(...)`; do not pass memory pointers.
+- Keep source construction form for ptop-style 3pt runs: `source.source12(latt_info, "point", [ix, iy, iz, tsrc])`.
+- Keep gauge workflow order: read -> `toDevice()` -> copy -> stout smear -> load into Dirac.
+- Keep gauge API constraint in this workspace: use `dirac.loadGauge(gauge)` only, do not use `useGauge`.
+- Keep MPI workflow order: local accumulation (`latt_info.Lt`) -> collective `gatherLattice` on all ranks -> rank-0 save.
+- Keep rank checks only around file writing, not around collective communication calls.
+- Keep parameter symmetry across light/strange solver setup when the target recipe requires it.
+
+Use this normalization helper before contractions:
+
+```python
+def as_cp_array(x):
+  # Do not unwrap cp.ndarray.data: it is a MemoryPointer.
+  if isinstance(x, cp.ndarray):
+    return x
+  if isinstance(x, np.ndarray):
+    return cp.asarray(x)
+  y = x.data if hasattr(x, "data") else x
+  return cp.asarray(y)
+```
+
+Apply this to momentum phases, propagators, and wrapped field objects before every contraction.
