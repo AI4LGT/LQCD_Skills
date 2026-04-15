@@ -211,14 +211,10 @@ matrix elements from nonlocal two-point correlators. The reasoning chain is:
 
 ### Nonlocal source/sink operator structure
 
-The source is usually a local bilinear with momentum projection,
-
-$$
-\mathcal{O}_\text{src}(\vec{y},t_i)
-= \bar{q}_1(\vec{y},t_i)\Gamma_\text{src}q_2(\vec{y},t_i),
-$$
-
-while the sink contains a gauge-connected spatial displacement $\vec{z}$,
+Reuse the same source-side definitions as local 2pt (operator form, momentum
+projection, and source-time treatment). The nonlocal change is only at one
+operator endpoint, e.g. the sink bilinear contains a gauge-connected
+displacement $\vec{z}$:
 
 $$
 \mathcal{O}_\text{snk}(\vec{x},\vec{z},t_f)
@@ -226,23 +222,10 @@ $$
 W(\vec{x},\vec{x}+\vec{z})q_1(\vec{x}+\vec{z},t_f).
 $$
 
-Momentum projection is then applied when constructing the correlator, e.g.
-
-$$
-\mathcal{O}_\text{src}(\vec{p}_{src1},\vec{p}_{src2},t_i)
-= \sum_{\vec{y}} e^{-i\vec{p}_{src1}\cdot\vec{y}}e^{i\vec{p}_{src2}\cdot\vec{y}}\mathcal{O}_\text{src}(\vec{y},t_i),
-\qquad
-\mathcal{O}_\text{snk}(\vec{p}_{snk},\vec{z},t_f)
-= \sum_{\vec{x}} e^{-i\vec{p}_{snk}\cdot\vec{x}}\mathcal{O}_\text{snk}(\vec{x},\vec{z},t_f).
-$$
-
-Here $\vec{p}_{snk}$ is the extracted (physical) sink momentum of the
-correlator. The pair $\vec{p}_{src1},\vec{p}_{src2}$ are the source momenta
-used to build the two propagators in the inversion setup; they are auxiliary
-kinematic labels and need not be physical hadron momenta by themselves.
-In the formulas below, writing the source point as $(\vec{y},0)$ is only a
-notational convenience. More generally one may use $(\vec{y},t_{src})$ with
-$t_{src} \neq 0$, and then shift/average correlators in time in the usual way.
+For wall/momentum-wall implementations, one may still introduce two inversion
+phases at the estimator stage to approximate the source sum in practice.
+That implementation detail should be described separately from operator
+definitions.
 
 For a straight displacement along $+\hat{z}$,
 
@@ -252,140 +235,84 @@ $$
 
 Use the same DeGrand-Rossi/PyQUDA gamma convention as for local two-point
 functions. A common DA example is
-$\Gamma_\text{src}=\Gamma_\text{snk}=\gamma_4\gamma_5$, which corresponds to
-`gamma.gamma(7)` in the PyQUDA gamma-bit convention used in these skills.
+$\Gamma_\text{src}=\Gamma_\text{snk}=\gamma_4\gamma_5$.
+In code, prefer `gamma.gamma(8) @ gamma.gamma(15)` for clarity.
+`gamma.gamma(7)` can differ by an overall sign under project conventions.
 
 ### Wick contraction and γ₅-hermiticity
 
-The nonlocal two-point correlator is obtained by Fourier transforming the
-coordinate-space source and sink operators:
+For agent guidance, treat nonlocal 2pt as local 2pt plus one field replacement:
 
 $$
-\begin{aligned}
-C_2(\vec{p}_{snk},t,\vec{z})
-&= \langle \mathcal{O}_\text{snk}(\vec{p}_{snk},t_f,\vec{z})
-\mathcal{O}_\text{src}^\dagger(\vec{p}_{src1},\vec{p}_{src2},t_i) \rangle \\
-&= \sum_{\vec{x},\vec{y}} e^{-i\vec{p}_{snk}\cdot\vec{x}}
-e^{-i\vec{p}_{src1}\cdot\vec{y}}e^{i\vec{p}_{src2}\cdot\vec{y}}
-\langle \mathcal{O}_\text{snk}(\vec{x},t_f,\vec{z})
-\mathcal{O}_\text{src}^\dagger(\vec{y},t_i) \rangle \\
-&= \sum_{\vec{x},\vec{y}} e^{-i\vec{p}_{snk}\cdot\vec{x}}
-e^{-i\vec{p}_{src1}\cdot\vec{y}}e^{i\vec{p}_{src2}\cdot\vec{y}}
-\langle [\bar{q}_2(\vec{x})\Gamma_\text{snk}W(\vec{x},\vec{x}+\vec{z})
-q_1(\vec{x}+\vec{z})]
-[\bar{q}_1(\vec{y})\Gamma_\text{src}q_2(\vec{y})]^\dagger \rangle.
-\end{aligned}
+q'_1(\vec{x},t_f) \equiv W(\vec{x},\vec{x}+\vec{z})q_1(\vec{x}+\vec{z},t_f).
 $$
 
-Taking the Hermitian adjoint of the source bilinear introduces an overall
-fermion minus sign:
+If $q'_1$ is treated as an ordinary quark field in Wick contraction, the
+derivation is identical to local 2pt. The only change appears in the final
+propagator used in contraction.
+
+So reuse the local 2pt contraction formula directly, and replace one propagator
+by $S_\text{shift}$:
 
 $$
-[\bar{q}_1\Gamma_\text{src}q_2]^\dagger
-= -\bar{q}_2\gamma_4\Gamma_\text{src}^\dagger\gamma_4 q_1
-\equiv -\bar{q}_2\bar{\Gamma}_\text{src}q_1.
-$$
-
-The connected contraction is therefore
-
-$$
-C_2(\vec{p}_{snk},t,\vec{z})
-= -\sum_{\vec{x},\vec{y}} e^{-i\vec{p}_{snk}\cdot\vec{x}}
-e^{-i\vec{p}_{src1}\cdot\vec{y}}e^{i\vec{p}_{src2}\cdot\vec{y}}
-\mathrm{Tr}\left[
-S_2(\vec{y},t_i;\vec{x},t_f)\Gamma_\text{snk}
-W(\vec{x},\vec{x}+\vec{z})
-S_1(\vec{x}+\vec{z},t_f;\vec{y},t_i)
-\bar{\Gamma}_\text{src}
-\right].
-$$
-
-For wall / momentum-wall / other extended sources, the source-side sum
-over $\vec{y}$ is performed implicitly by the inversion, together with the
-two source phases $e^{-i\vec{p}_{src1}\cdot\vec{y}}$ and
-$e^{i\vec{p}_{src2}\cdot\vec{y}}$. In practice one then evaluates a sink-side
-expression written with explicit source coordinate notation:
-
-$$
-C_2(\vec{p}_{snk},t,\vec{z})
-= -\sum_{\vec{x}} e^{-i\vec{p}_{snk}\cdot\vec{x}}
-\mathrm{Tr}\left[
-S_2(\vec{y},0;\vec{x},t)\Gamma_\text{snk}
-W(\vec{x},\vec{x}+\vec{z})S_1(\vec{x}+\vec{z},t;\vec{y},0)
-\bar{\Gamma}_\text{src}
-\right].
-$$
-
-For point sources, there is no explicit $\sum_{\vec{y}}$ because
-$\vec{y}=\vec{y}_0$ is fixed (often chosen as $\vec{y}_0=0$ after translation).
-Then
-
-$$
-e^{-i\vec{p}_{src1}\cdot\vec{y}_0}e^{i\vec{p}_{src2}\cdot\vec{y}_0}
-$$
-
-is just an overall constant phase factor (equal to 1 when $\vec{y}_0=0$), so
-the two source exponentials do not appear explicitly in the contraction.
-
-Apply $\gamma_5$-hermiticity to the backward propagator,
-$S_2(\vec{y},0;\vec{x},t)=\gamma_5 S_2^\dagger(\vec{x},t;\vec{y},0)\gamma_5$:
-
-$$
-C_2(\vec{p}_{snk},t,\vec{z})
-= -\sum_{\vec{x}} e^{-i\vec{p}_{snk}\cdot\vec{x}}
+C_2(\vec{p},t,\vec{z})
+= -\sum_{\vec{x}} e^{-i\vec{p}\cdot\vec{x}}
 \mathrm{Tr}\left[
 \gamma_5 S_2^\dagger(\vec{x},t;\vec{y},0)\gamma_5
 \Gamma_\text{snk}
-W(\vec{x},\vec{x}+\vec{z})S_1(\vec{x}+\vec{z},t;\vec{y},0)
+S_\text{shift}(\vec{x},t;\vec{y},0;\vec{z})
 \bar{\Gamma}_\text{src}
 \right].
 $$
 
-Thus the computational blocks are:
-
-1. $\gamma_5 S_2^\dagger(\vec{x},t;\vec{y},0)\gamma_5$ — the conjugated local propagator.
-2. $\Gamma_\text{snk}$ — the sink spin projector.
-3. $W(\vec{x},\vec{x}+\vec{z})S_1(\vec{x}+\vec{z},t;\vec{y},0)$ — the gauge-shifted forward propagator.
-4. $\bar{\Gamma}_\text{src}=\gamma_4\Gamma_\text{src}^\dagger\gamma_4$ — the daggered source spin projector, with the overall fermion minus kept separately.
-
-### Wall-source momentum assignment rule
-
-For wall-source setups that show a clean signal, use
+Endpoint conventions for $S_\text{shift}$:
 
 $$
-\vec{p}_{snk} = -\vec{p}_{src1} + \vec{p}_{src2}.
+S_{u'\bar{u}}(x,y;z) = W(x,x+z)S_u(x+z,y) \equiv W(x,z)S,
 $$
 
-This reflects how the two source phases combine into the net extracted sink
-momentum. Since $\vec{p}_{src1}$ and $\vec{p}_{src2}$ are auxiliary inversion
-momenta rather than directly physical hadron momenta, a practical choice is to
-split them as evenly as possible around $\vec{p}_{snk}/2$:
+$$
+S_{u\bar{u}'}(x,y;z) = S_u(x,y+z)W(y+z,y) \equiv SW(z,x).
+$$
 
-1. If $p_{snk}=4$, choose $p_{src1}=-2$, $p_{src2}=2$.
-2. If $p_{snk}=3$, choose $p_{src1}=-1$, $p_{src2}=2$.
+So the implementation rule is simple: derive local 2pt once, then for each
+displacement $z$ update one propagator by repeated covariant shifts and reuse
+the same contraction code.
+
+Important: the gauge field used for shifts is defined by the Wilson line and
+can differ from the gauge field used for inversions. A common setup is smeared
+gauge for Dirac inversion but unsmeared pure gauge for the Wilson-line shift.
+
+### Wall-source implementation note (estimator level)
+
+In the derivation above, keep a single physical momentum $\vec{p}$.
+
+If a wall-source implementation approximates the source sum using two inversion
+phases, one may use
+
+$$
+\vec{p} \approx \vec{p}_{\mathrm{src1}} - \vec{p}_{\mathrm{src2}}.
+$$
+
+This is an implementation detail for the correlator estimator, not an operator
+definition rule.
+
+A common practical choice is to split around $\vec{p}/2$:
+
+1. If $p=4$, choose $p_{\mathrm{src1}}=2$, $p_{\mathrm{src2}}=-2$.
+2. If $p=3$, choose $p_{\mathrm{src1}}=2$, $p_{\mathrm{src2}}=-1$.
 
 The same nearest-half split strategy is usually used component-wise for vector
 momenta.
 
 ### Gauge-shifted propagator and `covDev` equivalence
 
-Do not explicitly build the Wilson line unless necessary. Instead define
+Do not explicitly build the full Wilson line unless necessary. In practice,
+initialize `propag_shift` with the local propagator at $z=0$, then apply
+`covDev`/`Shift_prop` repeatedly to reach $z=1,\ldots,z_\text{max}$.
 
-$$
-\psi_{\vec{z}}(\vec{x}) = W(\vec{x},\vec{x}+\vec{z})
-S_1(\vec{x}+\vec{z},t;\vec{y},0).
-$$
-
-For $\vec{z}=z\hat{\mu}$ this is generated iteratively:
-
-1. $\psi_0(\vec{x})=S_1(\vec{x},t;\vec{y},0)$.
-2. $\psi_{n+1}(\vec{x})=U_\mu(\vec{x})\psi_n(\vec{x}+\hat{\mu})$.
-
-In PyQUDA this is exactly the forward gauge-covariant shift implemented by
-`covDev(psi, mu)` / a project-local `Shift_prop` wrapper. A typical script
-should compute the $z=0$ contraction first, then repeatedly update
-`propag_shift = Shift_prop(propag_shift, mu)` and contract again for
-$z=1,\ldots,z_\text{max}$.
+For the $u\bar{u}'$ endpoint convention, apply the analogous shift on the
+anti-quark side.
 
 **Important gauge-field convention**: use the intended Wilson-line gauge
 field for the shift. If the physics requires an unsmeared Wilson line, the
@@ -401,17 +328,17 @@ layout `[parity][t][z][y][x]`. A compact contraction template is:
 ```python
 numpy.opt_einsum.contract(
    "wtzyx,wtzyxjiba,mjk,wtzyxklba,nli->mnt",
-  mom_phase,          # e^{-i p_snk · x}; check PyQUDA phase sign carefully
+  mom_phase,          # e^{-i p · x}; check PyQUDA phase sign carefully
    propag_2.data.conj(),
    gamma_snk_list,
-  propag_shift.data,  # W(x, x+z) S_1(x+z; y,0)
+  propag_shift.data,  # shifted local propagator (WS or SW by endpoint convention)
    gamma_src_list,     # usually \bar{Gamma}_src or a list of choices
 )
 ```
 
-Here `propag_shift` is initialized to `propag_1` for $z=0$ and then updated by
-the covariant shift for each displacement. The indices `m,n` allow multiple
-sink/source gamma choices to be evaluated in one contraction.
+Here `propag_shift` is initialized to the local propagator for $z=0$ and then
+updated by repeated covariant shifts for each displacement. The indices `m,n`
+allow multiple sink/source gamma choices to be evaluated in one contraction.
 
 ### Nonlocal 2pt pitfalls
 
