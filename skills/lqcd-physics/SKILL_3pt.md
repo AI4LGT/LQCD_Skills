@@ -31,7 +31,7 @@ For the initial $\Lambda$ baryon (isospin-singlet, $J^P = 1/2^+$, flavour conten
 
 **$\Lambda$ operator (source)**:
 $$
-\mathcal{O}_\Lambda(x) = \epsilon^{abc} \big( u^{aT}(x)\, C\gamma_5\, d^{b}(x) \big) P_+ s^{c}(x), \qquad P_+ = \frac{1+\gamma_4}{2}
+\mathcal{O}_\Lambda(x) = \epsilon^{abc} \big( u^{aT}(x)\, C\gamma_5\, d^{b}(x) \big) s^{c}(x)
 $$
 
 **Proton operator (sink)**:
@@ -41,10 +41,10 @@ $$
 
 **Hermitian conjugate of $\Lambda$** (needed for the correlator):
 $$
-\bar{\mathcal{O}}_\Lambda(y) = -\epsilon^{abc} \big( \bar{u}^{a}(y)\, C\gamma_5\, \bar{d}^{b}(y) \big) \bar{s}^{c}(y) P_+
+\bar{\mathcal{O}}_\Lambda(y) = -\epsilon^{abc} \big( \bar{u}^{a}(y)\, C\gamma_5\, \bar{d}^{b}(y) \big) \bar{s}^{c}(y)
 $$
 
-Here $C = \gamma_2\gamma_4$ (charge conjugation), $C\gamma_5$ is symmetric. The $\Lambda$ operator contains a positive-parity projector $P_+$ to ensure correct parity. The proton operator does not contain $P_+$; the projection is applied via the sink projector $T$ (one of the 16 Dirac matrices, for example $\gamma_4$) embedded in the sequential source.
+Here $C = \gamma_2\gamma_4$ (charge conjugation), $C\gamma_5$ is symmetric. the projection is applied via the sink projector $T$ (one of the 16 Dirac matrices, for example $\gamma_4$) embedded in the sequential source.
 
 For the current $J$ we consider the flavour-changing vector current $V^\mu = \bar{u}\gamma^\mu s$ or axial-vector current $A^\mu = \bar{u}\gamma^\mu\gamma_5 s$.
 
@@ -53,7 +53,7 @@ For the current $J$ we consider the flavour-changing vector current $V^\mu = \ba
 The three-point function with momentum projection is:
 
 $$
-C_3(\vec{p}_f,\vec{p}_i; t_f,t_{seq},t_i)T = \sum_{\vec{x},\vec{y}} e^{-i\vec{p}_f\cdot\vec{x}} e^{-i\vec{q}\cdot\vec{y}} \; \langle \mathcal{O}_{p,C}(\vec{x},t_f) \; J(\vec{y},\tau) \; \bar{\mathcal{O}}_{\Lambda,J}(\vec{0},t_i) \rangle T_{JC}
+C_3(\vec{p}_f,\vec{q}; t_f,t_{seq},t_i)T = \sum_{\vec{x},\vec{y}} e^{-i\vec{p}_f\cdot\vec{x}} e^{-i\vec{q}\cdot\vec{y}} \; \langle \mathcal{O}_{p,C}(\vec{x},t_f) \; J(\vec{y},\tau) \; \bar{\mathcal{O}}_{\Lambda,J}(\vec{0},t_i) \rangle T_{JC}
 $$
 
 where $\vec{q} = \vec{p}_i - \vec{p}_f$. We set $t_i = 0$, $t_f = x_2$ and the source position at $\vec{0}$ by translation invariance. Define $T$ (one of the 16 gamma matrices, e.g. $T = \gamma_1$) to project the redundant spinor indices.
@@ -70,7 +70,7 @@ C_3 T &= -\sum_{\vec{x},\vec{y}} e^{-i\vec{p}_f\cdot\vec{x}_2} e^{-i\vec{q}\cdot
 \epsilon^{ijk}\epsilon^{lmn} \\
 &\quad \langle \big( u^{i,T}_A(x_2) (C\gamma_5)_{AB} d^{j}_B(x_2) \big) u^{k}_C(x_2) \\
 &\qquad \cdot \bar{u}^{o}_E(t_{seq}) (\Gamma^{\mu})_{EF} s^{o}_F(t_{seq}) \\
-&\qquad \cdot \big( \bar{u}^{l}_G(0) (C\gamma_5)_{GH} \bar{d}^{m,T}_H(0) \big) \bar{s}^{n}_I(0) (P_+)_{IJ} \rangle T_{JC}
+&\qquad \cdot \big( \bar{u}^{l}_G(0) (C\gamma_5)_{GH} \bar{d}^{m,T}_H(0) \big) \bar{s}^{n}_I(0) \rangle T_{IC}
 \end{aligned}
 $$
 
@@ -78,7 +78,7 @@ where $\Gamma^{\mu} = \gamma^\mu$ (vector) or $\gamma^\mu\gamma_5$ (axial-vector
 
 #### Step 3b - Perform the Wick contraction
 
-Contract all quark fields using Wick's theorem. Because the current contains a $\bar{s}u$ pair, the strange quark from the current must contract with the $\bar{s}$ in $\bar{\mathcal{O}}_\Lambda$, and the $u$ quark from the current contracts either with the $u$ in the diquark of $\mathcal{O}_p$ or with the single $u$ in $\mathcal{O}_p$. Two topologically distinct diagrams arise:
+Contract all quark fields using Wick's theorem. Because the current contains a $\bar{s}u$ pair, the strange quark from the current contracts with the $\bar{s}$ in $\bar{\mathcal{O}}_\Lambda$, and the $u$ quark from the current contracts either with the $u$ in the diquark of $\mathcal{O}_p$ or with the single $u$ in $\mathcal{O}_p$. Two topologically distinct diagrams arise:
 
 - **Diagram 1 (direct)**: the $u$ from the current contracts with the $u$ inside the diquark of the proton. The other $u$ (the single one) contracts with the $\bar{u}$ from $\bar{\mathcal{O}}_\Lambda$.
 - **Diagram 2 (exchange)**: the $u$ from the current contracts with the single $u$ of the proton, while the diquark $u$ contracts with the $\bar{u}$ from $\bar{\mathcal{O}}_\Lambda$.
@@ -88,7 +88,7 @@ After summing over colour with the epsilon tensors and applying fermion anti-com
 $$
 \begin{aligned}
 C_3^{\Gamma}T &=-\sum_{\vec{x},\vec{y}} e^{-i\vec{p}_f\cdot\vec{x}_2} e^{-i\vec{q}\cdot\vec{x}} \,
-\epsilon_{ijk}\epsilon_{lmn} (C\gamma_5)_{AB} \Gamma_{EF} (C\gamma_5)_{GH} (T P_+)_{IC} \\
+\epsilon_{ijk}\epsilon_{lmn} (C\gamma_5)_{AB} \Gamma_{EF} (C\gamma_5)_{GH} (T)_{IC} \\
 &\quad \times \Big[
 S^{u,il}_{AG}(x_2,0) S^{d,ko}_{CE}(x_2,x) S^{u,jm}_{BH}(x_2,0) S^{s,on}_{FI}(x,0) \\
 &\qquad -
@@ -124,7 +124,7 @@ Instead of storing all sink-time slices, use the sequential source technique:
 
 2. Construct the sink-time object $X(x_2,0)$:
 $$
-X(x_2,0) = \epsilon_{ijk}\epsilon_{lmn} (C\gamma_5)_{AB} (T P_+)_{ID} (C\gamma_5)_{GH}
+X(x_2,0) = \sum_{\vec{x}_2} e^{-i\vec{p}_f\cdot\vec{x}_2} \epsilon_{ijk}\epsilon_{lmn} (C\gamma_5)_{AB} (T)_{ID} (C\gamma_5)_{GH}
 \big[ S_l(x_2,0)_{AG}^{il} S_l(x_2,0)_{BH}^{jm} - S^{d,kl}_{CG}(x_2,0) S^{u,jm}_{BH}(x_2,0) \big]
 $$
 
@@ -140,7 +140,7 @@ $$
 
 5. Contract with strange propagator and current matrix:
 $$
-C_3^{\Gamma}(t,t_{seq}) = \sum_{\vec{x}} e^{-i\vec{p}\cdot\vec{x}}
+C_3^{\Gamma}(t,t_{seq}) = \sum_{\vec{x}} e^{-i\vec{q}\cdot\vec{x}}
 \operatorname{Tr}\big[G^{\text{seq},ij}_{AB}(x,0)\,\Gamma_{BC}\,S^{s,ji}_{CA}(x,0)\big]
 $$
 
@@ -163,12 +163,12 @@ Sequential source construction and 3pt contraction pattern:
 X_Lambda_to_proton.data = (
     contract(
         "wtzyx, ijk, lmn, AB, GH, ID, wtzyxDGkl, wtzyxBHjm -> wtzyxIAni",
-        mom_phase_final, epsilon, epsilon, Cg5, Cg5, P_plus @ gamma.gamma(T),
+        mom_phase_final, epsilon, epsilon, Cg5, Cg5, gamma.gamma(T),
         prop_l.data, prop_l.data,
     )
     - contract(
         "wtzyx, ijk, lmn, AB, GH, ID, wtzyxAGil, wtzyxBHjm -> wtzyxIDnk",
-        mom_phase_final, epsilon, epsilon, Cg5, Cg5, P_plus @ gamma.gamma(T),
+        mom_phase_final, epsilon, epsilon, Cg5, Cg5, gamma.gamma(T),
         prop_l.data, prop_l.data,
     )
 )
@@ -187,13 +187,13 @@ propag_seq_Lambda_to_proton = core.invertPropagator(dirac_l, src_seq_Lambda_to_p
 three_pt_tmp_V = pycontract.mesonTwoPoint(
     prop_s,
     propag_seq_Lambda_to_proton,
-    gamma.Gamma(Γ),
+    gamma.Gamma(/Gamma),
     gamma.Gamma(0),
 )
 three_pt_tmp_A = pycontract.mesonTwoPoint(
     prop_s,
     propag_seq_Lambda_to_proton,
-    gamma.Gamma(Γ) @ gamma.Gamma(15),
+    gamma.Gamma(/Gamma) @ gamma.Gamma(15),
     gamma.Gamma(0),
 )
 ```
@@ -227,59 +227,14 @@ Recommended implementation order:
 4. Run propagator inversion -> sequential source -> sequential inversion -> V/A contraction.
 5. Save 3pt arrays on rank 0.
 
-## Appendix: ptop.py reproduction hard constraints (minimal)
+## Appendix: implementation checklist (compact)
 
-If the explicit goal is to get 3pt.py, enforce all items below.
+If the goal is production 3pt data with a reproducible script, use this checklist:
 
-1. CLI input and source list:
-- keep `cfg = int(sys.argv[1])`
-- keep `np.loadtxt("./list_simple.txt", ndmin=2)` and read `(ix, iy, iz)` from matching `cfg`
-
-1. Initialization and geometry:
-- keep `core.init([1, 1, 1, 4], resource_path=".cache")`
-- keep `LatticeInfo([24, 24, 24, 72], -1, 1.0)`
-
-1. Dirac parameters (script-level reproduction target):
-- keep `l_mass = -0.2770`, `s_mass = -0.2400`
-- keep `v = 0.951479`, `clover = 1/(v**3)`
-- keep `tol = 1e-10`, `maxiter = 1000`, and multigrid blocks `[[6,6,6,4],[4,4,4,6]]`
-- keep `dirac_l = core.getDirac(..., 1.0, clover, clover, MG_BLOCK)` and `dirac_s = core.getDirac(..., 1.0, clover, clover, MG_BLOCK)`
-
-1. Gauge and smearing:
-- keep Chroma QIO gauge path template used in ptop.py
-- keep `gauge.toDevice()` before copy/smear
-- keep stout smearing call `stoutSmear(1, 0.125, 4)`
-- keep gauge loading API fixed to `dirac.loadGauge(gauge_stout)` (and corresponding strange/light dirac objects); do not use `useGauge`
-
-1. Operator and contraction setup:
-- keep `C = gamma.gamma(2) @ gamma.gamma(8)`, `G5 = gamma.gamma(15)`, `Cg5 = C @ G5`, `G0 = gamma.gamma(0)`, `Gt = gamma.gamma(8)`, `P_plus = (G0 + Gt)/2`
-- keep epsilon tensor initialization with antisymmetric signs
-- keep sequential-source two-term contraction with relative minus sign
-- keep hermiticity transform `gamma5 * X^dagger * gamma5`
-
-1. Loop defaults (when user did not request changes):
-- keep `tsrc_list = [0]`, `T_list = [1]`, `Γ_list = [1]`, `tseq_list = [8]`, `mom_list = [[0,0,0]]`
-
-1. Phase and current channels:
-- keep two phases:
-    - current phase: `getPhase([px, py, pz, 0], [ix, iy, iz, 0])`
-    - final/sink phase: `getPhase([-px, -py, -pz, 0], [ix, iy, iz, 0])`
-- keep both channels:
-    - V: `gamma.Gamma(Γ)`
-    - A: `gamma.Gamma(Γ) @ gamma.Gamma(15)`
-
-1. Output shape and save:
-- keep local accumulation shape `(len(tsrc), len(mom), len(T), len(Γ), len(tseq), latt_info.Lt)` with dtype `<c16`
-- keep `core.gatherLattice(..., [5, -1, -1, -1])`
-- keep `core.gatherLattice` as a collective call on all MPI ranks; only file writing is rank-0
-- keep rank-0 save paths:
-    - `./3pt_Lambda_to_proton/Lambda_to_proton_GammaV_{cfg}.npy`
-    - `./3pt_Lambda_to_proton/Lambda_to_proton_GammaA_{cfg}.npy`
-
-1. Source and contraction backend:
-- keep source builder `source.source12(latt_info, "point", [ix, iy, iz, tsrc])`
-- keep contraction backend consistent with benchmark: prefer `from pyquda_plugins import pycontract`
-- if fallback backend is used, print backend name at startup for reproducibility
-
-1.  Registry consistency note:
-- if [skill/ensemble_registry.yaml](skill/ensemble_registry.yaml) values differ from ptop target values, explicitly state that this run is in "ptop-reproduction mode" and prioritizes script-faithful constants.
+1. Keep CLI input for `cfg` and map source coordinates from a table.
+2. Keep initialization, lattice geometry, and solver parameters explicit in the script.
+3. Keep gauge workflow ordered as read -> `toDevice()` -> smear -> `loadGauge`.
+4. Keep the two-term sequential-source contraction and `gamma5 * X^dagger * gamma5` transform.
+5. Keep momentum phases explicit for current and sink projections.
+6. Keep `core.gatherLattice` as a collective call on all MPI ranks; only file writing runs on rank 0.
+7. Keep source builder and contraction backend visible in logs for reproducibility.
