@@ -9,8 +9,8 @@ description: >
   smearing with APE/HYP/stout links), propagator inversion, and residual
   verification. Reads ensemble parameters from ensemble_registry.yaml.
   Trigger on: "compute propagators", "solve propagator", "run inversions",
-  "call PyQUDA", "solve Dirac equation", or when lqcd-physics has produced
-  a propagator requirements list.
+  "call PyQUDA", "solve Dirac equation", or when
+  lqcd-physics-correlator has produced a propagator requirements list.
 ---
 
 # PyQUDA Tool Usage
@@ -41,7 +41,7 @@ computes and saves per-configuration results. It does not produce analysis code.
 
 Do NOT generate any computation code until the following are resolved. Present the information gathered in step 1 to the user, then ask the questions in step 2 and wait for answers.
 
-**Step 1 — Physics derivation**: The propagator requirements must be known before writing code. Use lqcd-physics reasoning to derive: what interpolating operators are needed, what the Wick contraction looks like, and which propagators (quark flavors, source→sink structure) are required. Present this derivation to the user.
+**Step 1 — Physics derivation**: The propagator requirements must be known before writing code. Use `lqcd-physics-correlator` reasoning to derive: what interpolating operators are needed, what the Wick contraction looks like, and which propagators (quark flavors, source→sink structure) are required. Present this derivation to the user.
 
 **Step 2 — Ask the user** to confirm or specify the following source configuration, as the optimal choice depends on the target observable and computational budget:
 
@@ -59,13 +59,40 @@ Momentum projection is **not** a user choice — it is determined by the correla
 
 PyQUDA is a Python wrapper of the QUDA library, which provides GPU-accelerated operations for lattice QCD. PyQUDA uses NumPy arrays to handle lattice fields, and uses CuPy/PyTorch/DPNP arrays when GPU accelerated linear algebra is needed. PyQUDA is designed to run on cluster environment which have a job scheduler like SLURM or PBS, thus it usually runs in an MPI environment. There are some key concepts to understand when using the package:
 
+#### MPI
+
+In PyQUDA, MPI is used to run the code on multiple GPUs across different nodes in a cluster. Each MPI rank corresponds to a separate process that can run on a different GPU, and they communicate with each other during the computation. The number of MPI ranks should match the total number of GPUs being used for the job. PyQUDA might use a custom MPI communicator instead of the COMM_WORLD, and defines the API to access the communicator.
+
+```python
+from pyquda_utils import core
+
+comm = core.getMPIComm()
+rank = core.getMPIRank()
+size = core.getMPISize()
+```
+
 #### Grid
 
-Grid in PyQUDA indicates how to partition the lattice across multiple MPI ranks, which is very close to the concept of a Cartesion communicator. For example, a grid size of `[2, 2, 1, 1]` means that the lattice will be partitioned into 4 sublattices in the x and y dimensions, while the z and t dimensions are not partitioned. The product of the grid dimensions must equal the total number of MPI ranks used to run the job. If one dimension is partitioned, there will be communication between MPI ranks in that dimension during the solver iterations. If the grid size is not specified, but the targeting lattice size is provided during the initialization, PyQUDA will automatically generate a grid size, trying to minimize the communication between different MPI ranks.
+Grid in PyQUDA indicates how to partition the lattice across multiple MPI ranks, which is very close to the concept of a Cartesion communicator. For example, a grid size of `[2, 2, 1, 1]` means that the lattice will be partitioned into 4 sublattices in the x and y dimensions, while the z and t dimensions are not partitioned. The product of the grid dimensions must equal the total number of MPI ranks used to run the job. If one dimension is partitioned, there will be communication between MPI ranks in that dimension during the solver iterations. If the grid size is not specified, but the targeting lattice size is provided during the initialization, PyQUDA will automatically generate a grid size, trying to minimize the communication between different MPI ranks. PyQUDA defines the API to access the grid information.
+
+```python
+from pyquda_utils import core
+
+grid_size = core.getGridSize()
+grid_coord = core.getGridCoord()
+```
 
 #### Device
 
-Device in PyQUDA refers to the local GPU device ID that each MPI rank will use. By default, PyQUDA will assign GPU devices based on the local rank of each MPI process. For example, if you have 4 GPUs and 4 MPI ranks, each rank will be assigned to a different GPU (rank 0 to GPU 0, rank 1 to GPU 1, etc.). Sometimes, a cluster will offer a binding script to bind each MPI rank to a specific NUMA node, GPU, and NIC, and environment variables such as `CUDA_VISIBLE_DEVICES` are usually set by the script. You will have to set `enable_mps=True` during the initialization in this situation to allow all ranks in one node can use the same GPU ID 0, although they are actually using different devices.
+Device in PyQUDA refers to the local GPU device ID that each MPI rank will use. By default, PyQUDA will assign GPU devices based on the local rank of each MPI process. For example, if you have 4 GPUs and 4 MPI ranks, each rank will be assigned to a different GPU (rank 0 to GPU 0, rank 1 to GPU 1, etc.). Sometimes, a cluster will offer a binding script to bind each MPI rank to a specific NUMA node, GPU, and NIC, and environment variables such as `CUDA_VISIBLE_DEVICES` are usually set by the script. You will have to set `enable_mps=True` during the initialization in this situation to allow all ranks in one node can use the same GPU ID 0, although they are actually using different devices. PyQUDA defines the API to access the current backend (the pacakge to manage GPU arrays) and device information.
+
+```python
+from pyquda_utils import core
+
+backend = core.getArrayBackend()
+backend_target = core.getArrayBackendTarget()
+device = core.getArrayDevice()
+```
 
 #### Lattice information
 
@@ -77,7 +104,23 @@ Lattice fields are objects in PyQUDA to handle the data of fields used in LQCD. 
 
 #### Array location
 
-PyQUDA can handle arrays in different locations (CPU or GPU) with different backends (NumPy, CuPy, PyTorch, DPNP). The `backend` parameter in the initialization determines which array library is used for handling lattice fields by default. If `backend="cupy"` is set, PyQUDA will create a CuPy array for the field data when creating a `LatticeGauge` or `LatticePropagator` object. But remember if a `LatticeGauge` or `LatticePropagator` is created by loading from disk, the field data will always be created as a NumPy array on CPU, and you will have to use the `toDevice()` to transfer the data to GPU memory. PyQUDA provides a consistent API to support array linear algebra operations on GPU with backends. You can check `pyquda_comm.array` module for the supported operations. It's clear that using the `"numpy"` backend will keep all arrays on CPU, saving GPU memory but without acceleration.
+PyQUDA can handle arrays in different locations (CPU or GPU) with different backends (NumPy, CuPy, PyTorch, DPNP). The `backend` parameter in the initialization determines which array library is used for handling lattice fields by default. If `backend="cupy"` is set, PyQUDA will create a CuPy array for the field data when creating a `LatticeGauge` or `LatticePropagator` object. But remember if a `LatticeGauge` or `LatticePropagator` is created by loading from disk, the field data will always be created as a NumPy array on CPU, and you will have to use the `toDevice()` to transfer the data to GPU memory. PyQUDA provides a consistent API to support array linear algebra operations on GPU with backends. You can check `pyquda_comm.array` module for the supported operations. Using the `"numpy"` backend will keep all arrays on CPU, saving GPU memory but without acceleration. PyQUDA defines the API to transfer arrays between CPU and GPU.
+
+```python
+from pyquda_comm import array
+
+# Define the GPU array backend
+backend = "cupy" # or "torch", "dpnp", "numpy"
+
+# Transfer a CPU (NumPy) array to GPU (CuPy/PyTorch/DPNP)
+gpu_array = array.arrayAsArray(cpu_array, backend=backend)
+
+# Transfer a GPU (CuPy/PyTorch/DPNP) array to CPU (NumPy)
+cpu_array = array.arrayAsNumpy(gpu_array, backend=backend)
+
+# Transfer a GPU (CuPy/PyTorch/DPNP) array to CPU (NumPy), and ensure the data is contiguous in memory
+cpu_array = array.arrayAsNumpyCopy(gpu_array, backend=backend)
+```
 
 #### Gamma matrices
 
@@ -216,7 +259,21 @@ rho_2pt_3 = cp.einsum('wtzyx,wtzyxjiba,jk,wtzyxklba,li->t', phase.data, propag_s
 rho_2pt = (rho_2pt_1 + rho_2pt_2 + rho_2pt_3) / 3
 rho_2pt = core.gatherLattice(rho_2pt, [0, -1, -1, -1])
 ```
-Please refer to "lqcd-physics" skills for more details on how to perform contractions for various hadronic correlators. The convention for the spin-color indices in the propagator is (parity, t, z, y, x, spin_snk, spin_src, color_snk, color_src). The `einsum` function is used to perform the necessary contractions to compute the two-point correlator for the rho meson. The `phase.data` is applied to account for the momentum projection $e^{-i\vec{p}\cdot\vec{x}}$. This is reversed comparing to the phase we applied to the source, due to the conjugation in the source operator, please refer to "lqcd-physics" to get the explation of this. Finally, we gather the lattice data from all MPI ranks to obtain the full correlator in the root rank as a function of time. The second argument of `gatherLattice` specifies the dimensions to gather in `tzyx` order, where `0` indicates that we want to gather the data in the $t$ dimension, and `-1` means performing reduction in all three spatial dimensions.
+Please refer to `lqcd-physics-correlator` for more details on how to
+perform contractions for various hadronic correlators. The convention for
+the spin-color indices in the propagator is `(parity, t, z, y, x,
+spin_snk, spin_src, color_snk, color_src)`. The `einsum` function is used
+to perform the necessary contractions to compute the two-point correlator
+for the rho meson. The `phase.data` is applied to account for the momentum
+projection $e^{-i\vec{p}\cdot\vec{x}}$. This is reversed compared with the
+phase applied to the source because of the conjugation in the source
+operator; `lqcd-physics-correlator` explains that sign and phase
+convention. Finally, we gather the lattice data from all MPI ranks to
+obtain the full correlator in the root rank as a function of time. The
+second argument of `gatherLattice` specifies the dimensions to gather in
+`tzyx` order, where `0` indicates that we want to gather the data in the
+$t$ dimension, and `-1` means performing reduction in all three spatial
+dimensions.
 
 ### Step 8: Save output
 

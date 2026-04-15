@@ -9,10 +9,10 @@ description: >
   (ratio method, summation method, simultaneous C₂+C₃ two-state fit),
   dispersion relation and speed of light, fit diagnostics (χ²/dof, Q-value,
   AIC, SVD cut), and scale conversion to physical units. Uses fit function
-  templates from lqcd-physics spectral decomposition. Trigger on: "analyze
-  correlators", "fit the data", "extract mass", "effective mass", "matrix
-  element", "dispersion relation", "speed of light", "jackknife",
-  "resampling", "lsqfit", or when contractions are done and results needed.
+  templates from lqcd-physics-spectrum. Trigger on: "analyze correlators",
+  "fit the data", "extract mass", "effective mass", "matrix element",
+  "dispersion relation", "speed of light", "jackknife", "resampling",
+  "lsqfit", or when contractions are done and results needed.
 ---
 
 # LQCD Analysis Pipeline
@@ -240,7 +240,8 @@ for plotting.
 
 ## Step 4: Two-point function fitting (hadron spectrum)
 
-The spectral decomposition (see lqcd-physics) determines the fit function.
+The spectral decomposition (see `lqcd-physics-spectrum`) determines the fit
+function.
 The fit amplitudes $A_n$ absorb all normalization factors. The fit model
 below handles both mesons and baryons:
 
@@ -393,7 +394,8 @@ is only in error estimation.
 
 Matrix elements are extracted from three-point functions $C_3(\tau, t_\text{sep})$
 with current insertion $J$ at time $\tau$ between source ($t=0$) and sink
-($t=t_\text{sep}$). The spectral decomposition (see lqcd-physics) gives:
+($t=t_\text{sep}$). The spectral decomposition (see
+`lqcd-physics-spectrum`) gives:
 
 $$C_3(\tau,\, t_\text{sep}) = \sum_{n,m} B_{nm}\; e^{-E_n(t_\text{sep} - \tau)}\, e^{-E_m\,\tau}$$
 
@@ -581,7 +583,8 @@ The framework above is **operator-agnostic**: the specific Lorentz/Dirac
 structure of the current $J$ does not affect the fitting procedure — it
 only enters through:
 
-- The contraction that produces C₃ (handled by the lqcd-physics skill)
+- The contraction that produces C₃ (handled by the
+  `lqcd-physics-correlator` skill)
 - Kinematic prefactors relating $\mathcal{M}$ to physical form factors
   (e.g., $g_A$, $f_+$, $g_M$), which depend on the operator and spin
   projection
