@@ -37,18 +37,17 @@ For a target hadron with quantum numbers $J^{PC}$ and flavor content, write the 
 
 For example, the simplest interpolating operator for a $\pi^+$ meson is usually written as $\mathcal{O}_{\pi^+} = \bar{d}^a \gamma_5 u^a$, and the simplest operator for a proton is $\mathcal{O}_p = \epsilon^{abc} (u^a C\gamma_5 d^b) u^c$. The simplest local operators are usually sufficient for ground state mass extraction, but interpolating operators can be constructed with gamma matrices and gauge covariant derivatives to access different quantum numbers, excited states, and observables related to hadron structure in general. For example, if we want to compute pion distribution amplitudes, we should use non-local operators with quark fields separated by a Wilson line, e.g. $\mathcal{O}_{\pi^+}(x;z) = \bar{d}^a(0) \gamma_5 W(0,z) u^a(z)$. If we want to compute a matrix element of an axial vector current inserted on the $u$ quark, we should insert the current operator $J_\mu=\bar{u}\gamma_5\gamma_\mu u$ between the source and sink operators in the three-point function.
 
-**Gamma matrices convention**: Use the DeGrand-Rossi basis as the Euclidean Dirac basis, which is the default gamma basis in PyQUDA convention:
+**Gamma matrices convention**: Use the DeGrand-Rossi basis as the Euclidean Dirac basis, which is the default gamma basis in PyQUDA convention, can be defined in terms of the Pauli matrices $\sigma_i$ as:
 
 $$
 \gamma_1 = \begin{pmatrix} 0 & i \sigma_1 \nonumber \\ -i \sigma_1 & 0 \end{pmatrix},\quad
 \gamma_2 = \begin{pmatrix} 0 & -i \sigma_2 \\ i \sigma_2 & 0 \end{pmatrix},\quad
 \gamma_3 = \begin{pmatrix} 0 & i \sigma_3 \\ -i \sigma_3 & 0 \end{pmatrix},\quad
 \gamma_4 = \begin{pmatrix} 0 & I_{2 \times 2}\\ I_{2 \times 2} & 0 \end{pmatrix}, \\
-\gamma_5=\gamma_1\gamma_2\gamma_3\gamma_4=\begin{pmatrix} I_{2 \times 2} & 0 \\ 0 & -I_{2 \times 2} \end{pmatrix},\quad
-C = \gamma_2\gamma_4 = \begin{pmatrix} -i\sigma_2 & 0\\ 0 & i\sigma_2 \end{pmatrix}
+\gamma_5=\gamma_1\gamma_2\gamma_3\gamma_4=\begin{pmatrix} I_{2 \times 2} & 0 \\ 0 & -I_{2 \times 2} \end{pmatrix},\quad\gamma_0=I_{4 \times 4}=\begin{pmatrix} I_{2 \times 2} & 0 \\ 0 & I_{2 \times 2} \end{pmatrix},\quad C = \gamma_2\gamma_4 = \begin{pmatrix} -i\sigma_2 & 0\\ 0 & i\sigma_2 \end{pmatrix}
 $$
 
-Clearly we have $\gamma_\mu^\dagger = \gamma_\mu$ for $\mu = 1,2,3,4$ in the DeGrand-Rossi basis. And we have gamma anticommutation relations $\{\gamma_\mu, \gamma_\nu\} = 2\delta_{\mu\nu}$ and $\{\gamma_5, \gamma_\mu\} = 0$. The charge conjugation matrix $C=\gamma_2\gamma_4$.
+Clearly we have $\gamma_\mu^\dagger = \gamma_\mu$ for $\mu = 1,2,3,4,5$ in the DeGrand-Rossi basis. We have gamma anticommutation relations $\{\gamma_\mu, \gamma_\nu\} = 2\delta_{\mu\nu}$. Only $\gamma_1$ and $\gamma_3$ will generate a negative sign after the transpose. The auxiliary $\gamma_0$ is defined as the identity matrix, and the charge conjugation matrix $C=\gamma_2\gamma_4$.
 
 ### Step 2: Write the correlator
 
