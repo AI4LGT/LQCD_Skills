@@ -218,6 +218,52 @@ with dirac.useGauge(gauge):
 ```
 Here we use the `core.invertSequential` function to solve for a sequential propagator from the smeared propagator. This is useful for three-point correlator calculations where we need to insert an operator at a specific time slice. The `t_seq` parameter specifies the time slice where the sequential source is defined.
 
+#### Source or sink shift
+
+When the operator has a non-local structure, we might need to apply a shift to the propagator, which could be defined in source or sink. If there is a Wilson link $W$ attached to the propagator, we can use `covDev` to apply the gauge-covariant shift. If the shift is defined in source, we can apply the shift to the source propagator before inversion:
+```python
+from pyquda_utils import core, X, Y, Z, T
+
+gauge_shift = gauge.copy()
+with dirac.useGauge(gauge):
+  source_pt_shifted = source_pt.copy()
+
+  # We use gauge_shift instead of gauge to apply the shift
+  # gauge_shift might not be smeared of the same way as gauge, depending on the requirements
+  with gauge_shift.use() as dirac_shift:
+    for spin in range(4):
+      for color in range(3):
+        temp = source_pt_shifted.getFermion(spin, color)
+        temp = dirac_shift.covDev(temp, -Z)
+        source_pt_shifted.setFermion(temp, spin, color)
+```
+This shift happends in the $-z$ direction: $S'(x;y) = S(x;y-\hat{z})W(y-\hat{z},y)$.
+
+If the shift is defined in sink, we can apply the shift to the propagator after inversion:
+```python
+from pyquda_utils import core, X, Y, Z, T
+
+gauge_shift = gauge.copy()
+with dirac.useGauge(gauge):
+  propag_pt_shifted = propag_pt.copy()
+
+  # We use gauge_shift instead of gauge to apply the shift
+  # gauge_shift might not be smeared of the same way as gauge, depending on the requirements
+  with gauge_shift.use() as dirac_shift:
+    for spin in range(4):
+      for color in range(3):
+        temp = propag_pt_shifted.getFermion(spin, color)
+        temp = dirac_shift.covDev(temp, Z)
+        propag_pt_shifted.setFermion(temp, spin, color)
+```
+Similarly, this shift happends in the $z$ direction, but in another side: $S'(x;y) = W(x,x+\hat{z})S(x+\hat{z};y)$.
+
+The shift can be applied multiple times to implement a Wilson line in any shape, just using the corresponding drection variables `X, Y, Z, T` in the `covDev` calls.
+
+Do not mix the gauge used for inversion with the gauge used for the shift. The
+Dirac operator may use a smeared gauge field, but `covDev` should use the pure
+gauge links appropriate for the Wilson line definition. Make sure to use the correct context manager when applying the shift, so the correct gauge field is loaded into QUDA.
+
 #### Multiple source times
 
 Structure the main computation as a loop over source times when multiple sources are used:

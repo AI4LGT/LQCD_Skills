@@ -1,12 +1,12 @@
-## Example 3: Nucleon mass (proton)
+## Example: Proton baryon mass (positive parity channel)
 
-**Goal**: Extract $m_p$
+**Goal**: Extract $m_p$. We need to calculate the two-point correlation function of $p$.
 
 **Step 1 — Operator**:
   $$\mathcal{O}_{p} = \epsilon^{abc} (u^{Ta} C\gamma_5 d^b) u^c$$
 
 **Step 2 — Correlator**: A positive-parity projector is needed to isolate the ground-state nucleon:
-  $$C_p(\vec{p}; t,0) = \mathrm{Tr}\big[P^+ \langle \mathcal{O}_{p}(\vec{p},t) \mathcal{O}^\dagger_{p}(\vec{p},0) \rangle\big],\quad P^+ = \frac{1 + \gamma_4}{2}$$
+  $$C_p(\vec{p}; t,0) = \mathrm{Tr}[P^+ \langle \mathcal{O}_{p}(\vec{p},t) \mathcal{O}^\dagger_{p}(\vec{p},0) \rangle ],\quad P^+ = \frac{1 + \gamma_4}{2}$$
 
 **Step 3a — Quark fields**: Expand in quark fields and Fourier transform, writing out all spin indices explicitly:
   $$C_p(\vec{p}; t,0) = P^+_{\gamma''\gamma} \sum_{\vec{x}, \vec{y}} e^{-i \vec{p} \cdot (\vec{x} - \vec{y})} \epsilon^{abc} u^a_\alpha(\vec{x},t) (C\gamma_5)_{\alpha\beta} d^b_\beta(\vec{x},t) u^c_\gamma (\vec{x},t) \epsilon^{a'b'c'} \bar{u}^{c'}_{\gamma'}(\vec{y},0) (\gamma_4)_{\gamma'\gamma''} \bar{d}^{b'}_{\beta'}(\vec{y},0) (\gamma_4 \gamma_5 C \gamma_4)_{\beta'\alpha'} \bar{u}^{a'}_{\alpha'}(\vec{y},0)$$
@@ -37,7 +37,6 @@ $$C_p(\vec{p}; t,0) \approx \sum_{\vec{x}} e^{-i \vec{p} \cdot \vec{x}} \epsilon
 
 **Step 5 — Einsum** (see conventions above):
 ```python
-numpy.einsum('wtzyx,abc,def,ij,kl,mn,wtzyxikad,wtzyxjlbe,wtzyxnmcf,li->t', phase, epsilon, epsilon, C @ gamma_5, C @ gamma_5, P_plus, S_l, S_l, S_l) \
-+ numpy.einsum('wtzyx,abc,def,ij,kl,mn,wtzyximad,wtzyxjlbe,wtzyxnkcf,li->t', phase, epsilon, epsilon, C @ gamma_5, C @ gamma_5, P_plus, S_l, S_l, S_l)
+twopt = numpy.einsum('wtzyx,abc,def,ij,kl,mn,wtzyxikad,wtzyxjlbe,wtzyxnmcf,li->t', phase, epsilon, epsilon, C @ gamma_5, C @ gamma_5, P_plus, S_l, S_l, S_l) + numpy.einsum('wtzyx,abc,def,ij,kl,mn,wtzyximad,wtzyxjlbe,wtzyxnkcf,li->t', phase, epsilon, epsilon, C @ gamma_5, C @ gamma_5, P_plus, S_l, S_l, S_l)
 ```
 Note: this expression may carry an extra minus sign depending on the transpose convention of the gamma matrices. The einsum is expensive for baryons — in practice, break it into smaller intermediate contractions to reduce cost.

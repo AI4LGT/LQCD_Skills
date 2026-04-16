@@ -35,7 +35,7 @@ backward-state structure, and fit templates, hand off to
 
 For a target hadron with quantum numbers $J^{PC}$ and flavor content, write the interpolating operator. Use Dirac bilinears for mesons, and appropriate diquark-quark structures for baryons.
 
-For example, the simplest interpolating operator for a $\pi^+$ meson is usually written as $\mathcal{O}_{\pi^+} = \bar{d}^a \gamma_5 u^a$, and the simplest operator for a proton is $\mathcal{O}_p = \epsilon^{abc} (u^a C\gamma_5 d^b) u^c$. The simplest local operators are usually sufficient for ground state mass extraction, but interpolating operators can be constructed with gamma matrices and gauge covariant derivatives to access different quantum numbers, excited states, and observables related to hadron structure in general. For example, if we want to compute pion distribution amplitudes, we should use non-local operators with quark fields separated by a Wilson line, e.g. $\mathcal{O}_{\pi^+}(z) = \bar{d}^a(0) \gamma_5 W(0,z) u^a(z)$.
+For example, the simplest interpolating operator for a $\pi^+$ meson is usually written as $\mathcal{O}_{\pi^+} = \bar{d}^a \gamma_5 u^a$, and the simplest operator for a proton is $\mathcal{O}_p = \epsilon^{abc} (u^a C\gamma_5 d^b) u^c$. The simplest local operators are usually sufficient for ground state mass extraction, but interpolating operators can be constructed with gamma matrices and gauge covariant derivatives to access different quantum numbers, excited states, and observables related to hadron structure in general. For example, if we want to compute pion distribution amplitudes, we should use non-local operators with quark fields separated by a Wilson line, e.g. $\mathcal{O}_{\pi^+}(x;z) = \bar{d}^a(0) \gamma_5 W(0,z) u^a(z)$. If we want to compute a matrix element of an axial vector current inserted on the $u$ quark, we should insert the current operator $J_\mu=\bar{u}\gamma_5\gamma_\mu u$ between the source and sink operators in the three-point function.
 
 **Gamma matrices convention**: Use the DeGrand-Rossi basis as the Euclidean Dirac basis, which is the default gamma basis in PyQUDA convention:
 
@@ -48,7 +48,7 @@ $$
 C = \gamma_2\gamma_4 = \begin{pmatrix} -i\sigma_2 & 0\\ 0 & i\sigma_2 \end{pmatrix}
 $$
 
-Clearly we have $\gamma_\mu^\dagger = \gamma_\mu$ for $\mu = 1,2,3,4$ in the DeGrand-Rossi basis. And we have gamma anticommutation relations $\{\gamma_\mu, \gamma_\nu\} = 2\delta_{\mu\nu}$ and $\{\gamma_5, \gamma_\mu\} = 0$.
+Clearly we have $\gamma_\mu^\dagger = \gamma_\mu$ for $\mu = 1,2,3,4$ in the DeGrand-Rossi basis. And we have gamma anticommutation relations $\{\gamma_\mu, \gamma_\nu\} = 2\delta_{\mu\nu}$ and $\{\gamma_5, \gamma_\mu\} = 0$. The charge conjugation matrix $C=\gamma_2\gamma_4$.
 
 ### Step 2: Write the correlator
 
@@ -64,7 +64,7 @@ For a matrix element or form factor, you need a three-point function
 
 $$C_3(\vec{q}; t_f,t_i,\tau) = \langle \mathcal{O}_\text{snk}(\vec{p}_f,t_f) J(\vec{q},\tau) \mathcal{O}^\dagger_\text{src}(\vec{p}_i,t_i) \rangle$$
 
-with an appropriate current insertion J. Here, $t_f$ is the sink time, $\tau$ is the current insertion time, and $t_i$ is the source time. (We can shift the time slices to average over equivalent time slices to enhance the signal.) The transfer momentum is calculated by $\vec{q} = \vec{p}_i - \vec{p}_f$.
+with an appropriate current insertion $J$. Here, $t_f$ is the sink time, $\tau$ is the current insertion time, and $t_i$ is the source time. (We can shift the time slices to average over equivalent time slices to enhance the signal.) The transfer momentum is calculated by $\vec{q} = \vec{p}_i - \vec{p}_f$.
 
 ### Step 3: Wick contraction and propagator determination
 
@@ -83,9 +83,17 @@ A typical 2-point correlator $C_\pi(\vec{p}; t,0) = \sum_{\vec{x},\vec{y}} e^{-i
 
 **Point source**: We can use a point source at a fixed spatial location and time slice (e.g., $\vec{y} = \vec{y}_0$ at $t=t_0$), set the phase $e^{i\vec{p}\cdot\vec{y}_0}$ at this point, and compute the propagator from this source point to all spatial points at all time slices, namely $S_{l,\text{point}(\vec{p},\vec{y}_0,t_0)}(\vec{x},t)\equiv e^{i\vec{p}\cdot\vec{y}_0}S_l(\vec{x},t;\vec{y}_0,t_0)$. This gives us an estimate of the correlator: $C_\pi(\vec{p}; t,0) \approx \sum_{\vec{x}} e^{-i \vec{p} \cdot \vec{x}} \text{Tr}[ S_{l,\text{point}(\vec{-p}_2,\vec{y}_0,t_0)}^{\dagger}(\vec{x},t) S_{l,\text{point}(\vec{p}_1,\vec{y}_0,t_0)}(\vec{x},t) ]$, where $\vec{p}=\vec{p}_1+\vec{p}_2$. The extra negative sign on $\vec{p}_2$ comes from the conjugate transpose of the propagator. This is how to use point source propagators to calculate the correlator. Note the momentum phase here is only a complex factor, we can just ignore it and set it to 1 without affecting any physical results. Then the momentum index $\vec{0}$ can be eliminated and the correlator estimated can be written as $C_\pi(\vec{p}; t,0) \approx \sum_{\vec{x}} e^{-i \vec{p} \cdot \vec{x}} \text{Tr}[ S_{l,\text{point}(\vec{y}_0,t_0)}^{\dagger}(\vec{x},t) S_{l,\text{point}(\vec{y}_0,t_0)}(\vec{x},t) ]$. For better statistics, we can also use multiple point sources at different spatial locations and time slices, and average the resulting correlators.
 
-**Wall source**: We can also use a wall source that spans the entire spatial volume at a fixed time slice (e.g., $t=t_0$), set the phase $e^{i\vec{p}\cdot\vec{x}}$ for each spatial point, and compute the propagator from this source to all spatial points at all time slices, namely $S_{l,\text{wall}(\vec{p},t_0)}(\vec{x},t)\equiv\sum_{y}e^{i\vec{p}\cdot\vec{y}}S_l(\vec{x},t;\vec{y},t_0)$. This gives us an estimate of the correlator: $C_\pi(\vec{p}; t,0) \approx \sum_{\vec{x}} e^{-i \vec{p} \cdot \vec{x}} \text{Tr}[ S_{l,\text{wall}(\vec{p},t_0)}^{\dagger}(\vec{x},t) S_{l,\text{wall}(\vec{p},t_0)}(\vec{x},t) ]$. For better statistics, we can also use multiple wall sources at different time slices, and average the resulting correlators.
+**Wall source**: We can also use a wall source that spans the entire spatial volume at a fixed time slice (e.g., $t=t_0$), set the phase $e^{i\vec{p}\cdot\vec{x}}$ for each spatial point, and compute the propagator from this source to all spatial points at all time slices, namely $S_{l,\text{wall}(\vec{p},t_0)}(\vec{x},t)\equiv\sum_{y}e^{i\vec{p}\cdot\vec{y}}S_l(\vec{x},t;\vec{y},t_0)$. This gives us an estimate of the correlator: $C_\pi(\vec{p}; t,0) \approx \sum_{\vec{x}} e^{-i \vec{p} \cdot \vec{x}} \text{Tr}[ S_{l,\text{wall}(-\vec{p}_2,t_0)}^{\dagger}(\vec{x},t) S_{l,\text{wall}(\vec{p}_1,t_0)}(\vec{x},t) ]$. Here we apply the similar momentum splitting strategy just like the point source case. But we cannot ignore the phase in the wall source, so we really need to calculate both $S_{l,\text{wall}(-\vec{p}_2,t_0)}$ and $S_{l,\text{wall}(-\vec{p}_2,t_0)}$. Assuming that we only have a momentum in the $z$ direction, and we have $\vec{p}_i=(0,0,p_z)$, and the best strategy to split the momentum is basically equally splitting, i.e.
+1. If $p_z=1$, choose $\vec{p}_1=(0,0,1)$, $\vec{p}_2=(0,0,0)$;
+2. If $p_z=2$, choose $\vec{p}_1=(0,0,1)$, $\vec{p}_2=(0,0,1)$;
+3. If $p_z=3$, choose $\vec{p}_1=(0,0,2)$, $\vec{p}_2=(0,0,1)$;
+4. If $p_z=4$, choose $\vec{p}_1=(0,0,2)$, $\vec{p}_2=(0,0,2)$;
+
+and so on. Finally, for better statistics, we can also use multiple wall sources at different time slices, and average the resulting correlators. 
 
 **Volume source**: Generally we do not use volume sources for two-point functions, but they can be used for all-to-all propagator with stochastic estimation. A volume source is defined as $S_{l,\text{volume}(\vec{p},E)}(\vec{x},t)\equiv\sum_{\vec{y},\tau}e^{i(\vec{p}\cdot\vec{y}+E\tau)}S(\vec{x},t;\vec{y},\tau)$, which have the 4-momentum phase at each spatial point and time slice.
+
+**Shifted propagator**: When using a non-local operator like $\mathcal{O}_{\pi^+}(x;z) = \bar{d}^a(x) \gamma_5 W(x,z) u^a(z)$, we will see the final propagator need to be shifted by applying the corresponding Wilson line like $S_{u,W(\vec{z},t)}(\vec{x},t;\vec{y},0)\equiv W(\vec{z},t;\vec{x},t)S_u(\vec{z},t;\vec{y},0)$. This is because the quark field in the operator is located at $\vec{z}$ instead of $\vec{x}$, and the Wilson line connects the two points to make the operator gauge invariant. The same applies to current and baryon operators with non-local structures.
 
 Output a list of propagators specifying:
 - Quark flavor / mass parameter
@@ -98,7 +106,7 @@ Output a list of propagators specifying:
 
 ## Worked examples
 
-See `examples/{pion,rho,proton}.md` for step-by-step demonstrations of the Wick contraction and propagator determination workflow.
+See files in `reference` directory for step-by-step demonstrations of the Wick contraction and propagator determination workflow. The filename indicates the target observable, e.g. `pion_mass.md` for the pion mass extraction example, `rho_mass.md` for the rho meson mass extraction example, and `proton.md` for the proton mass extraction example. Each example follows the same workflow outlined above, with detailed explanations of each step and the resulting expressions for the correlator, propagators needed, and einsum structure. The examples cover a range of observables and hadron types to illustrate the generality of the workflow.
 
 **Einsum conventions** (used by all example files): propagators use the
 data layout

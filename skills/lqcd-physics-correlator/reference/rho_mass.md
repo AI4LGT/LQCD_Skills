@@ -1,6 +1,6 @@
-## Example 2: Rho meson mass (ρ⁺ channel)
+## Example: Rho meson mass (ρ⁺ channel)
 
-**Goal**: Extract $m_\rho$
+**Goal**: Extract $m_\rho$. We need to calculate the two-point correlation function of $\rho^+$.
 
 **Step 1 — Operator**:
   $$\mathcal{O}_{\rho^+_i} = \bar{d} \gamma_i u \quad (i = 1, 2, 3 \text{ for the three polarizations})$$
@@ -33,5 +33,5 @@ $$C_\rho(\vec{p}; t,0) \approx \frac{1}{3}\sum_i\sum_{\vec{x}} e^{-i \vec{p} \cd
 
 **Step 5 — Einsum** (see conventions above):
 ```python
-numpy.einsum('wtzyx,wtzyxjiba,jk,wtzyxklab,li->t', phase, S_l.conj(), gamma_5 @ gamma_i, S_l, gamma_i @ gamma_5)
+twopt = numpy.einsum('wtzyx,wtzyxjiba,jk,wtzyxklab,li->t', phase, S_l.conj(), gamma_5 @ gamma_i, S_l, gamma_i @ gamma_5)
 ```

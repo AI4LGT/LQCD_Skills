@@ -1,6 +1,6 @@
-## Example 1: Pion mass (π⁺ channel)
+## Example: Pion meson mass (π⁺ channel)
 
-**Goal**: Extract $m_\pi$
+**Goal**: Extract $m_\pi$. We need to calculate the two-point correlation function of $\pi^+$.
 
 **Step 1 — Operator**:
   $$\mathcal{O}_{\pi^+} = \bar{d} \gamma_5 u$$
@@ -33,5 +33,5 @@ $$C_\pi(\vec{p}; t,0) \approx \sum_{\vec{x}} e^{-i \vec{p} \cdot \vec{x}} \text{
 
 **Step 5 — Einsum** (see conventions above):
 ```python
-numpy.einsum('wtzyx,wtzyxjiba,wtzyxijab->t', phase, S_l.conj(), S_l)
+twopt = numpy.einsum('wtzyx,wtzyxjiba,wtzyxijab->t', phase, S_l.conj(), S_l)
 ```
