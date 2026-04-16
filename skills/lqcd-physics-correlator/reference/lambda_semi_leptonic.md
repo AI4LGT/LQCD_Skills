@@ -1,160 +1,69 @@
-## Example: Lambda baryon to proton baryon semi-leptonic decay form factor
+## Example: Lambda to proton semi-leptonic form factors
 
-**Goal**: Extract $f_i(q^2)$ and $g_i(q^2)$. We need to calculate the matrix element of a flavor-changing current $J_\mu=\bar{u}\gamma_5\gamma_\mu s$ during the semi-leptonic process $\Lambda\to pl\bar{\nu}_l$
-c
-### Step 1: Operator
+**Goal**: Extract the vector and axial form factors for the decay $\Lambda \to p \ell \bar{\nu}_\ell$. The relevant quark currents are
+  $$J_V^\mu = \bar{u} \gamma_\mu s,\qquad J_A^\mu = \bar{u} \gamma_\mu \gamma_5 s,$$
+or, equivalently, the charged weak current
+  $$J_W^\mu = \bar{u} \gamma_\mu (1 - \gamma_5) s = J_V^\mu - J_A^\mu.$$
+In practice, the three-point function below is combined with proton and Lambda two-point functions to isolate the form factors $f_i(q^2)$ and $g_i(q^2)$.
 
-$$\mathcal{O}_\Lambda = \epsilon^{abc}(u^{Ta}C\gamma_5\, d^{b})s^{c}$$
-$$\mathcal{O}_p = \epsilon^{abc}(u^{Ta}C\gamma_5\,d^{b})u^{c}$$
+**Step 1 — Operators**:
+  $$\mathcal{O}_{\Lambda} = \epsilon^{abc} (u^{Ta} C\gamma_5 d^b) s^c,\qquad \mathcal{O}_{p} = \epsilon^{abc} (u^{Ta} C\gamma_5 d^b) u^c$$
 
-For the flavor-changing vector current:
-$$J_V^\mu=\bar{u}\gamma_\mu s$$
-For the flavor-changing axial vector current:
-$$J_A^\mu=\bar{u}\gamma_5\gamma_\mu s$$
+**Step 2 — Correlator**: For either the vector or axial insertion, define
+  $$C_{3,\Gamma}^\mu(\vec{p}_f,\vec{p}_i; t_f,\tau,0) = \mathrm{Tr}\!\left[P^+ \left\langle \mathcal{O}_{p}(\vec{p}_f,t_f) J_\Gamma^\mu(\vec{q},\tau) \bar{\mathcal{O}}_{\Lambda}(\vec{p}_i,0) \right\rangle \right],\quad J_\Gamma^\mu = \bar{u}\gamma_\mu \Gamma s$$
+with
+  $$\Gamma = 1 \text{ (vector)},\qquad \Gamma = \gamma_5 \text{ (axial)},\qquad P^+ = \frac{1 + \gamma_4}{2},\qquad \vec{q} = \vec{p}_i - \vec{p}_f.$$
+The new ingredient for this process is the three-point function; the required proton and Lambda two-point functions follow the same logic as the proton mass example and a straightforward $\Lambda$ two-point analogue.
 
-### Step 2: Correlator
+**Step 3a — Quark fields**: Fix the source at the origin by translation invariance and absorb the conventional adjoint $\gamma_4$ factors into the source spin structure. The three-point function becomes
+  $$C_{3,\Gamma}^\mu(\vec{p}_f,\vec{p}_i; t_f,\tau,0) = \sum_{\vec{x},\vec{z}} e^{-i\vec{p}_f \cdot \vec{x}} e^{+i\vec{q}\cdot\vec{z}} \epsilon^{abc} \epsilon^{a'b'c'} (C\gamma_5)_{\alpha\beta} (\gamma_5 C)_{\beta'\alpha'} P^+_{\lambda\gamma} \left\langle u^a_\alpha(x) d^b_\beta(x) u^c_\gamma(x) \bar{u}^r_\rho(z) (\gamma_\mu \Gamma)_{\rho\sigma} s^r_\sigma(z) \bar{s}^{c'}_\lambda(0) \bar{d}^{b'}_{\beta'}(0) \bar{u}^{a'}_{\alpha'}(0) \right\rangle$$
+with $x = (\vec{x}, t_f)$ and $z = (\vec{z}, \tau)$.
 
-$$
-C_3^\mu(\vec{p}_f,\vec{q},\vec{p}_i; t_f,\tau,t_i) = \mathrm{Tr}[P^+ \langle \mathcal{O}_p(\vec{p}_f,t_f)J^\mu(\vec{q},\tau)\bar{\mathcal{O}}_\Lambda(\vec{p}_i,t_i) \rangle]
-$$
-where $\vec{q} = \vec{p}_i - \vec{p}_f$.
+**Step 3b — Wick contraction**:
+Two connected contractions contribute, because the $\bar{u}$ in the weak current can attach to either of the two sink $u$ quarks:
 
-### Step 3: Wick contraction and propagator determination
+  $$C_{3,\Gamma}^\mu(\vec{p}_f,\vec{p}_i; t_f,\tau,0) = \sum_{\vec{x},\vec{z}} e^{-i\vec{p}_f \cdot \vec{x}} e^{+i\vec{q}\cdot\vec{z}} \epsilon^{abc} \epsilon^{a'b'c'} (C\gamma_5)_{\alpha\beta} (\gamma_5 C)_{\beta'\alpha'} P^+_{\lambda\gamma} (\gamma_\mu \Gamma)_{\rho\sigma} \\
+  \Big[ S_{u\,\alpha\alpha'}^{aa'}(x,0) S_{d\,\beta\beta'}^{bb'}(x,0) S_{u\,\gamma\rho}^{cr}(x,z) S_{s\,\sigma\lambda}^{rc'}(z,0) \\
+  - S_{u\,\alpha\rho}^{ar}(x,z) S_{d\,\beta\beta'}^{bb'}(x,0) S_{u\,\gamma\alpha'}^{ca'}(x,0) S_{s\,\sigma\lambda}^{rc'}(z,0) \Big]$$
 
-#### Step 3a - Expand the operators in quark fields
+The two terms are the direct and exchange attachments of the current to the proton sink.
 
-Insert the explicit quark fields. For brevity, we suppress some Dirac and colour labels initially:
+**Step 3c — Simplification**:
+  1. Apply isospin symmetry for the light quarks:
+  $$S_u = S_d = S_l.$$
+  2. Collect the entire proton sink structure into a sequential-source object at fixed $(\vec{p}_f, t_f, P^+)$:
+  $$B_{\rho\lambda}^{\,rc'}(x;0) = e^{-i\vec{p}_f \cdot \vec{x}} \epsilon^{abc} \epsilon^{a'b'c'} (C\gamma_5)_{\alpha\beta} (\gamma_5 C)_{\beta'\alpha'} P^+_{\lambda\gamma} \Big[ S_{l\,\alpha\alpha'}^{aa'}(x,0) S_{l\,\beta\beta'}^{bb'}(x,0) \delta^{cr}\delta_{\gamma\rho} - \delta^{ar}\delta_{\alpha\rho} S_{l\,\beta\beta'}^{bb'}(x,0) S_{l\,\gamma\alpha'}^{ca'}(x,0) \Big]$$
+  3. Use $\gamma_5$-hermiticity to turn this sink object into a light-quark sequential source,
+  $$\eta^{\text{seq}}(x) = \gamma_5 B^\dagger(x;0) \gamma_5,$$
+and solve
+  $$D_l\, G_l^{\text{seq}} = \eta^{\text{seq}}.$$
+Then the three-point function can be written in the compact form
+  $$C_{3,\Gamma}^\mu(\vec{p}_f,\vec{p}_i; t_f,\tau,0) = \sum_{\vec{z}} e^{+i\vec{q}\cdot\vec{z}} \mathrm{Tr}\!\left[ G_l^{\text{seq}}(z,0) \gamma_\mu \Gamma S_s(z,0) \right].$$
 
-$$
-\begin{aligned}
-C_3 T &= -\sum_{\vec{x},\vec{y}} e^{-i\vec{p}_f\cdot\vec{x}_2} e^{-i\vec{q}\cdot\vec{x}} \,
-\epsilon^{ijk}\epsilon^{lmn} \\
-&\quad \langle \big( u^{i,T}_A(x_2) (C\gamma_5)_{AB} d^{j}_B(x_2) \big) u^{k}_C(x_2) \\
-&\qquad \cdot \bar{u}^{o}_E(t_{seq}) (\Gamma^{\mu})_{EF} s^{o}_F(t_{seq}) \\
-&\qquad \cdot \big( \bar{u}^{l}_G(0) (C\gamma_5)_{GH} \bar{d}^{m,T}_H(0) \big) \bar{s}^{n}_I(0) \rangle T_{IC}
-\end{aligned}
-$$
+**Step 4 — Propagators needed**:
+As in the proton case, baryon correlators do not naturally admit a simple wall-source treatment. In practice we use point or smeared-point sources, with all three source quark lines originating from the same source location $(\vec{x}_0,0)$.
 
-where $\Gamma^{\mu} = \gamma^\mu$ (vector) or $\gamma^\mu\gamma_5$ (axial-vector).
+For the $\Lambda \to p$ three-point function, the required propagators are:
 
-#### Step 3b - Perform the Wick contraction
+- One forward light propagator $S_l(x;0)$, reused for the source $u/d$ lines and the proton sink construction
+- One forward strange propagator $S_s(x;0)$ from the same source position
+- One light sequential propagator $G_l^{\text{seq}}$ for each fixed sink momentum $\vec{p}_f$, sink time $t_f$, sink smearing choice, and spin projector
 
-Contract all quark fields using Wick's theorem. Because the current contains a $\bar{s}u$ pair, the strange quark from the current contracts with the $\bar{s}$ in $\bar{\mathcal{O}}_\Lambda$, and the $u$ quark from the current contracts either with the $u$ in the diquark of $\mathcal{O}_p$ or with the single $u$ in $\mathcal{O}_p$. Two topologically distinct diagrams arise:
+With a point source, the estimator takes the form
+  $$C_{3,\Gamma}^\mu(\vec{p}_f,\vec{p}_i; t_f,\tau,0) \approx \sum_{\vec{z}} e^{+i\vec{q}\cdot\vec{z}} \mathrm{Tr}\!\left[ G_{l,\text{seq}(\vec{p}_f,t_f,P^+)}(\vec{z},\tau;\vec{x}_0,0)\, \gamma_\mu \Gamma\, S_{s,\text{point}(\vec{x}_0,0)}(\vec{z},\tau) \right].$$
 
-- **Diagram 1 (direct)**: the $u$ from the current contracts with the $u$ inside the diquark of the proton. The other $u$ (the single one) contracts with the $\bar{u}$ from $\bar{\mathcal{O}}_\Lambda$.
-- **Diagram 2 (exchange)**: the $u$ from the current contracts with the single $u$ of the proton, while the diquark $u$ contracts with the $\bar{u}$ from $\bar{\mathcal{O}}_\Lambda$.
+To extract the full set of form factors, repeat the calculation for the needed current directions $\mu$, sink/projector choices, and momentum combinations, and combine with the proton and Lambda two-point correlators in a standard ratio or simultaneous fit analysis.
 
-After summing over colour with the epsilon tensors and applying fermion anti-commutation signs, we obtain:
-
-$$
-\begin{aligned}
-C_3^{\Gamma}T &=-\sum_{\vec{x},\vec{y}} e^{-i\vec{p}_f\cdot\vec{x}_2} e^{-i\vec{q}\cdot\vec{x}} \,
-\epsilon_{ijk}\epsilon_{lmn} (C\gamma_5)_{AB} \Gamma_{EF} (C\gamma_5)_{GH} (T)_{IC} \\
-&\quad \times \Big[
-S^{u,il}_{AG}(x_2,0) S^{d,ko}_{CE}(x_2,x) S^{u,jm}_{BH}(x_2,0) S^{s,on}_{FI}(x,0) \\
-&\qquad -
-S^{u,io}_{AE}(x_2,x) S^{d,kl}_{CG}(x_2,0) S^{u,jm}_{BH}(x_2,0) S^{s,on}_{FI}(x,0) \Big]
-\end{aligned}
-$$
-
-$S^u$, $S^d$, $S^s$ are the quark propagators.
-
-#### Step 3c - Simplify using $\gamma_5$-hermiticity and flavour symmetry
-
-We use $\gamma_5$-hermiticity:
-$$
-S(x,y) = \gamma_5 S^\dagger(y,x) \gamma_5.
-$$
-For degenerate light quarks ($m_u = m_d$), we have $S^u = S^d = S_l$.
-
-The three-point function can be rewritten as:
-$$
-C_3^{\Gamma}(t,t_{seq})T = \sum_{\vec{x}} e^{-i\vec{q}\cdot\vec{x}} \,
-\operatorname{Tr}\big[ G^{\text{seq}}(x,0) \, \Gamma \, S^{s}(x,0) \big]
-$$
-
-where $G^{\text{seq}}$ is a sequential propagator encoding the sink-side light-quark structure and sink projection.
-
-### Step 4: Sequential source method - propagator requirements
-
-Instead of storing all sink-time slices, use the sequential source technique:
-
-1. Compute light and strange propagators from the same source position $(\vec{x}_0,t_i)$:
-   - $S_l(x;0)$ for degenerate $u/d$
-   - $S_s(x;0)$ for strange
-
-2. Construct the sink-time object $X(x_2,0)$:
-$$
-X(x_2,0) = \sum_{\vec{x}_2} e^{-i\vec{p}_f\cdot\vec{x}_2} \epsilon_{ijk}\epsilon_{lmn} (C\gamma_5)_{AB} (T)_{ID} (C\gamma_5)_{GH}
-\big[ S_l(x_2,0)_{AG}^{il} S_l(x_2,0)_{BH}^{jm} - S^{d,kl}_{CG}(x_2,0) S^{u,jm}_{BH}(x_2,0) \big]
-$$
-
-3. Apply hermiticity to define the sequential source:
-$$
-J^{\text{seq}}(x_2) = \gamma_5 X^\dagger(x_2,0) \gamma_5
-$$
-
-4. Invert Dirac operator:
-$$
-D\,G^{\text{seq}} = J^{\text{seq}} \quad \Rightarrow \quad G^{\text{seq}} = D^{-1}J^{\text{seq}}
-$$
-
-5. Contract with strange propagator and current matrix:
-$$
-C_3^{\Gamma}(t,t_{seq}) = \sum_{\vec{x}} e^{-i\vec{q}\cdot\vec{x}}
-\operatorname{Tr}\big[G^{\text{seq},ij}_{AB}(x,0)\,\Gamma_{BC}\,S^{s,ji}_{CA}(x,0)\big]
-$$
-
-Required propagators per configuration and source position:
-
-- $S_l$: light ($u/d$), all-to-all from one source
-- $S_s$: strange, all-to-all from one source
-- $G^{\text{seq}}$: light sequential propagator at fixed sink setup
-
-### Step 5: Einsum implementation (PyQUDA-compatible)
-
-Assume propagator layout:
-
-`[parity][t][z][y][x][spin_snk][spin_src][color_snk][color_src]`
-
-Sequential source construction and 3pt contraction pattern:
-
+**Step 5 — Einsum** (see conventions above):
 ```python
-# Sequential source construction
-X_Lambda_to_proton.data = (
-    contract(
-        "wtzyx, ijk, lmn, AB, GH, ID, wtzyxDGkl, wtzyxBHjm -> wtzyxIAni",
-        mom_phase_final, epsilon, epsilon, Cg5, Cg5, gamma.gamma(T),
-        prop_l.data, prop_l.data,
-    )
-    - contract(
-        "wtzyx, ijk, lmn, AB, GH, ID, wtzyxAGil, wtzyxBHjm -> wtzyxIDnk",
-        mom_phase_final, epsilon, epsilon, Cg5, Cg5, gamma.gamma(T),
-        prop_l.data, prop_l.data,
-    )
-)
-
-X_Lambda_to_proton.data = contract(
-    "AB, wtzyxCBji, CD -> wtzyxADij",
-    G5,
-    X_Lambda_to_proton.data.conj(),
-    G5,
-)
-src_seq_Lambda_to_proton = source.sequential12(X_Lambda_to_proton, (tsrc + tseq))
-
-dirac_l.loadGauge(gauge_stout)
-propag_seq_Lambda_to_proton = core.invertPropagator(dirac_l, src_seq_Lambda_to_proton)
-
-three_pt_tmp_V = pycontract.mesonTwoPoint(
-    prop_s,
-    propag_seq_Lambda_to_proton,
-    gamma.Gamma(/Gamma),
-    gamma.Gamma(0),
-)
-three_pt_tmp_A = pycontract.mesonTwoPoint(
-    prop_s,
-    propag_seq_Lambda_to_proton,
-    gamma.Gamma(/Gamma) @ gamma.Gamma(15),
-    gamma.Gamma(0),
+# G_seq_dag denotes the sequential light propagator written with the same
+# conjugated spin-color index ordering used in the reference conventions.
+threept = numpy.einsum(
+    "wtzyx,wtzyxjiba,jk,wtzyxkiab->t",
+    phase_q,
+    G_seq_dag,
+    gamma_mu @ Gamma,
+    S_s,
 )
 ```
+Here `Gamma = I` gives the vector insertion and `Gamma = gamma_5` gives the axial insertion. As in the proton two-point case, the baryon sink block is expensive and should be assembled through smaller intermediate contractions rather than one giant flat einsum.

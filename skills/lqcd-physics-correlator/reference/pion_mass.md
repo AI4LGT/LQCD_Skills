@@ -33,5 +33,5 @@ $$C_\pi(\vec{p}; t,0) \approx \sum_{\vec{x}} e^{-i \vec{p} \cdot \vec{x}} \text{
 
 **Step 5 — Einsum** (see conventions above):
 ```python
-twopt = numpy.einsum('wtzyx,wtzyxjiba,wtzyxijab->t', phase, S_l.conj(), S_l)
+twopt = numpy.einsum('wtzyx,wtzyxjiba,wtzyxjiba->t', phase, S_l.conj(), S_l)
 ```
