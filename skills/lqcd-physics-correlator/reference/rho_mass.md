@@ -31,7 +31,20 @@ $$C_\rho(\vec{p}; t,0) \approx \frac{1}{3}\sum_i\sum_{\vec{x}} e^{-i \vec{p} \cd
 For wall source propagator
 $$C_\rho(\vec{p}; t,0) \approx \frac{1}{3}\sum_i\sum_{\vec{x}} e^{-i \vec{p} \cdot \vec{x}} \text{Tr}[ S_{l,\text{wall}(-\vec{p}_2,0)}^\dagger(\vec{x},t) (\gamma_5 \gamma_i) S_{l,\text{wall}(\vec{p}_1,0)}(\vec{x},t) (\gamma_i \gamma_5) ]$$
 
-**Step 5 — Einsum** (see conventions above):
+**Step 5 — Einsum** (see layout conventions above):
+
+For point source propagator
 ```python
-twopt = numpy.einsum('wtzyx,wtzyxjiba,jk,wtzyxklab,li->t', phase, S_l.conj(), gamma_5 @ gamma_i, S_l, gamma_i @ gamma_5)
+twopt = 0
+for gamma_i in [gamma_1, gamma_2, gamma_3]:
+  twopt += numpy.einsum('wtzyx,wtzyxjiba,jk,wtzyxklba,li->t', phase, S_l.conj(), gamma_5 @ gamma_i, S_l, gamma_i @ gamma_5)
+twopt /= 3
+```
+
+For wall source propagator
+```python
+twopt = 0
+for gamma_i in [gamma_1, gamma_2, gamma_3]:
+  twopt += numpy.einsum('wtzyx,wtzyxjiba,jk,wtzyxklba,li->t', phase, S_l_np2.conj(), gamma_5 @ gamma_i, S_l_p1, gamma_i @ gamma_5)
+twopt /= 3
 ```

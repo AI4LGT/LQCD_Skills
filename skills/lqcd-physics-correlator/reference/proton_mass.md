@@ -35,7 +35,7 @@ $$C_p(\vec{p}; t,0) \approx \sum_{\vec{x}} e^{-i \vec{p} \cdot \vec{x}} \epsilon
   [ S_{l,\text{point}(\vec{x}_0,0)\,\alpha\alpha'}^{aa'}(\vec{x},t) S_{l,\text{point}(\vec{x}_0,0)\,\beta\beta'}^{bb'}(\vec{x},t) S_{l,\text{point}(\vec{x}_0,0)\,\gamma\gamma'}^{cc'}(\vec{x},t) \\
   + S_{l,\text{point}(\vec{x}_0,0)\,\alpha\gamma'}^{aa'}(\vec{x},t) S_{l,\text{point}(\vec{x}_0,0)\,\beta\beta'}^{bb'}(\vec{x},t) S_{l,\text{point}(\vec{x}_0,0)\,\gamma\alpha'}^{cc'}(\vec{x},t) ]$$
 
-**Step 5 — Einsum** (see conventions above):
+**Step 5 — Einsum** (see layout conventions above):
 ```python
 twopt = numpy.einsum('wtzyx,abc,def,ij,kl,mn,wtzyxikad,wtzyxjlbe,wtzyxnmcf,li->t', phase, epsilon, epsilon, C @ gamma_5, C @ gamma_5, P_plus, S_l, S_l, S_l) + numpy.einsum('wtzyx,abc,def,ij,kl,mn,wtzyximad,wtzyxjlbe,wtzyxnkcf,li->t', phase, epsilon, epsilon, C @ gamma_5, C @ gamma_5, P_plus, S_l, S_l, S_l)
 ```

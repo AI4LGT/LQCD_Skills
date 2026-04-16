@@ -54,7 +54,7 @@ With a point source, the estimator takes the form
 
 To extract the full set of form factors, repeat the calculation for the needed current directions $\mu$, sink/projector choices, and momentum combinations, and combine with the proton and Lambda two-point correlators in a standard ratio or simultaneous fit analysis.
 
-**Step 5 — Einsum** (see conventions above):
+**Step 5 — Einsum** (see layout conventions above):
 ```python
 # G_seq_dag denotes the sequential light propagator written with the same
 # conjugated spin-color index ordering used in the reference conventions.

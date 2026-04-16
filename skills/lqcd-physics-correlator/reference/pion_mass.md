@@ -31,7 +31,14 @@ $$C_\pi(\vec{p}; t,0) \approx \sum_{\vec{x}} e^{-i \vec{p} \cdot \vec{x}} \text{
 For wall source propagator
 $$C_\pi(\vec{p}; t,0) \approx \sum_{\vec{x}} e^{-i \vec{p} \cdot \vec{x}} \text{Tr}[ S_{l,\text{wall}(-\vec{p}_2,0)}^\dagger(\vec{x},t) S_{l,\text{wall}(\vec{p}_1,0)}(\vec{x},t) ]$$
 
-**Step 5 — Einsum** (see conventions above):
+**Step 5 — Einsum** (see layout conventions above):
+
+For point source propagator
 ```python
 twopt = numpy.einsum('wtzyx,wtzyxjiba,wtzyxjiba->t', phase, S_l.conj(), S_l)
+```
+
+For wall source propagator
+```python
+twopt = numpy.einsum('wtzyx,wtzyxjiba,wtzyxjiba->t', phase, S_l_np2.conj(), S_l_p1)
 ```
