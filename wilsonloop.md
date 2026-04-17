@@ -1,230 +1,249 @@
 ---
-name: pyquda-wilson-loop-codegen
+name: pyquda-rectangular-wilson-loop-codegen
 description: >
-  Generate a research-style Python script using PyQUDA to compute a basic
-  Wilson loop (1x1 plaquette) in lattice QCD.
+  Wilson loop computation skill for lattice QCD using PyQUDA.
+  Generates a research-style Python script to evaluate a single
+  rectangular Wilson loop W(mu, nu; R, T) with explicit lattice construction.
 
-  The script must follow the explicit PyQUDA workflow, including:
-  initialization (init, LatticeInfo), gauge loading (readChromaQIOGauge),
-  GPU transfer (toDevice), Wilson loop construction via pack/covDev/unpack,
-  and final trace computation with correct MPI reduction and normalization.
-
-  The output code must be directly runnable, minimal, explicit, GPU-aware,
-  MPI-aware, and suitable for computational physics research usage.
+  The script follows the full pipeline:
+  gauge loading → Wilson line construction → loop closure →
+  trace evaluation → lattice averaging.
 ---
 
-# PyQUDA Wilson Loop Code Generation Skill
+PyQUDA Rectangular Wilson Loop Skill
 
-## Goal
+Purpose
 
-Generate a **research-style Python script** using PyQUDA to compute a basic Wilson loop (starting from 1x1 plaquette).
+Given a gauge configuration on a lattice, construct and evaluate a single
+rectangular Wilson loop observable W(mu, nu; R, T) using explicit PyQUDA operations.
 
-The script must be:
-- directly runnable
-- explicit and easy to debug
-- minimal abstraction
-- consistent with lattice QCD workflows
+This skill bridges:
 
----
+continuum Wilson loop definition → lattice discretization → PyQUDA implementation
 
-## Physics Target
+The output is a minimal, directly runnable Python script suitable for HPC usage.
 
-Construct the 1x1 Wilson loop (plaquette) in the (X, Y) plane:
 
-W(x) = Tr[
-U_X(x)
-U_Y(x + X)
-U_X^\dagger(x + Y)
-U_Y^\dagger(x)
+Physics Definition
+
+Wilson loop in the (mu, nu) plane:
+
+W_mu_nu(x; R, T) = Tr[
+L_mu(x, R)
+L_nu(x + R mu, T)
+L_mu^dagger(x + T nu, R)
+L_nu^dagger(x, T)
 ]
 
-Then compute the lattice average:
+Lattice average:
 
-<W> = (1 / (Nc * V)) * sum_x Tr[W(x)]
+<W_mu_nu(R, T)> = (1 / (Nc * V)) * sum_x Tr[W_mu_nu(x; R, T)]
 
 where:
 - Nc = 3
 - V = total lattice volume
 
----
 
-## Required Workflow
+Inputs
 
-The generated script must follow this exact structure:
+The generated script must read:
 
-### Step 0: Imports
-
-Use only necessary libraries:
-
-```python
-import sys
-import numpy as np
-import cupy as cp
-
-from pyquda import init, LatticeInfo
-from pyquda_utils import core, io
-from pyquda_utils.core import X, Y, Z, T
-```
-### Step 1: Read command-line input
-```
 cfg = sys.argv[1]
-```
-This cfg value MUST be used to construct the gauge file path.
+mu_name = sys.argv[2]
+nu_name = sys.argv[3]
+R_len = int(sys.argv[4])
+T_len = int(sys.argv[5])
+
+Direction constraints:
+- mu, nu ∈ {X, Y, Z, T}
+- mu != nu
+- negative directions are not independent inputs
+- reverse directions only appear when closing the loop
 
 
-### step 2: Initialize PyQUDA
+Implementation Strategy
 
-Example:
-```
+The script must explicitly construct the Wilson loop using gauge links.
+
+Wilson line rule:
+
+A Wilson line of length L in direction dir is constructed as:
+
+- first link: gauge.pack(dir, field)
+- remaining L - 1 links: repeated gauge.covDev(field, dir)
+
+Rectangular loop construction:
+
+1. propagate along mu direction for R_len steps
+2. propagate along nu direction for T_len steps
+3. propagate backward along mu direction
+4. propagate backward along nu direction
+5. close the loop at starting point
+
+This corresponds to the ordered product of gauge links along the loop path.
+
+
+Required PyQUDA Workflow
+
+The script must strictly follow:
+
+Step 0 - Imports
+
+Use only:
+sys, numpy, cupy, mpi4py
+pyquda.init, LatticeInfo
+pyquda_utils.core, io
+direction constants X, Y, Z, T
+
+Avoid any unrelated modules or helper abstractions.
+
+
+Step 1 - Input parsing
+
+Map mu_name and nu_name to PyQUDA direction constants.
+
+Validate:
+- mu != nu
+- R_len >= 1
+- T_len >= 1
+
+
+Step 2 - Initialization
+
 init([1, 1, 1, 4], resource_path=".cache")
-latt_info = LatticeInfo([24, 24, 24, 72], -1, 1.0)
-```
-### Step 3: Load gauge configuration
 
-Use cfg to build path:
-```
-cfg_file = f"/path/to/config_cfg_{cfg}.lime"
+Construct lattice information explicitly.
+
+
+Step 3 - Gauge loading
+
+Construct cfg_file using the standard Chroma QIO path pattern.
+
+Load with:
+
 gauge = io.readChromaQIOGauge(cfg_file)
+
+Move to GPU:
+
 gauge.toDevice()
-```
-Do NOT hardcode configuration numbers.
 
-### Step 4: Construct Wilson loop
+Fail explicitly if loading fails.
 
-Use this exact pattern:
-```
-gauge_wil = core.LatticeFermion(gauge.latt_info)
 
-gauge.pack(X, gauge_wil)
-gauge_wil = gauge.covDev(gauge_wil, Y)
-gauge_wil = gauge.covDev(gauge_wil, -X)
-gauge_wil = gauge.covDev(gauge_wil, -Y)
+Step 4 - Wilson loop construction
 
-loops = core.LatticeGauge(gauge.latt_info)
-loops.unpack(X, gauge_wil)
-```
-This represents a closed loop in (X, Y).
+Use explicit field-based construction:
 
-### Step 5: Inspect data
-```
-loop_data = loops.data
-```
-Print shape and type on rank 0.
+- core.LatticeFermion
+- gauge.pack
+- gauge.covDev
+- core.LatticeGauge
+- loops.unpack
 
-### Step 6: Compute trace
+Follow exactly the loop path described above.
 
-DO NOT drop imaginary part early.
+Do not:
+- use high-level wilson_loop helpers
+- construct multiple loops
+- average over orientations
+- introduce alternative implementations
 
-Determine the actual layout of `loops.data` first.
-Then sum only over non-color lattice/site indices, keeping the final 3x3 color matrix.
-Then compute the color trace explicitly.
-Do not assume the axes blindly without checking the printed shape.
-### Step 7: MPI reduction and normalization
 
-Must distinguish:
+Step 5 - Data inspection
 
-local sum
-global sum
+On rank 0 print:
 
-Final normalization:
-```
-W = total_sum / (Nc * global_volume)
-```
-Do NOT divide by extra factors like 4 unless justified.
-If a direct PyQUDA reduction helper is not clearly known to exist, use mpi4py for explicit global reduction instead of inventing a fake API.
-### Step 8: Output result
+type(loops.data)
+loops.data.shape
+loops.data.dtype
 
-On rank 0, print:
+This defines how the observable should be reduced.
 
-real part
-imaginary part
-## Critical Constraints
-### 1. Do NOT mix NumPy and CuPy incorrectly
 
-If data is on GPU, use:
+Step 6 - Trace and lattice sum
 
-cp.sum
-cp.trace
+Procedure:
 
-Only use .get() at the end.
+1. identify color matrix as final 3x3 block
+2. compute trace over color indices
+3. sum over lattice site indices
+4. keep complex values until final stage
 
-### 2. Do NOT ignore MPI
+Notes:
 
-Ensure global reduction is correct.
+- do not discard imaginary part early
+- do not assume tensor layout blindly
+- do not build a large automatic axis-detection system
 
-### 3. Do NOT over-engineer
-No classes
-No frameworks
-No unnecessary abstraction
-### 4. Keep code explicit
+Instead:
+use a short, explicit reduction consistent with observed layout
 
-Write in a clear, step-by-step style like a computational physicist.
 
-### 5. Only generate ONE loop
+Step 7 - MPI reduction
 
-Only implement (X, Y) plaquette.
+Use mpi4py:
 
-Do NOT generate multiple loop types.
-### 6. Do not use a prebuilt high-level wilson_loop helper.
-Construct the loop explicitly with pack / covDev / unpack.
-## Output Requirement
+- compute local complex sum
+- reduce via MPI.COMM_WORLD.Allreduce
+- reconstruct global complex value
 
-Generate a single complete Python script only.
+Do not:
+- use gather-based reduction
+- average per rank
 
-Do NOT include explanation outside the code.
 
-The script must be ready to run.
-### 7. Do NOT replace the PyQUDA workflow with a custom NumPy/HDF5 implementation
+Step 8 - Normalization
 
-The script must use the actual PyQUDA / pyquda_utils workflow.
+W = total_sum / (Nc * V_global)
 
-It must include the real operations:
-- `init(...)`
-- `LatticeInfo(...)`
-- `io.readChromaQIOGauge(...)`
-- `gauge.toDevice()`
-- `gauge.pack(...)`
-- `gauge.covDev(...)`
-- `loops.unpack(...)`
+V_global must represent full lattice volume.
 
-Do NOT create custom replacement functions named `pack`, `covDev`, or `unpack`.
 
-### 8. Do NOT change the input format
+Step 9 - Output
 
-The input is a Chroma QIO gauge configuration, not an HDF5 file.
+On rank 0 print:
 
-Do NOT use `h5py`.
-Do NOT search HDF5 datasets.
-Do NOT reinterpret the input as HDF5.
+- (mu, nu)
+- (R_len, T_len)
+- real part of W
+- imaginary part of W
 
-### 9. Do NOT use silent fallback identities
 
-If the gauge field cannot be read, or if the required operation fails, raise a clear error and stop.
+Constraints
 
-Do NOT replace missing links or failed reads with identity matrices.
+The generated script must:
 
-### 10. Do NOT compute only one site
+- implement only one loop per execution
+- remain minimal and explicit
+- follow the physical construction exactly
 
-The script must compute the Wilson loop contribution over the full local lattice volume, then perform global MPI reduction, then normalize by the total global volume.
+The script must NOT:
 
-Do NOT evaluate only a single plaquette at site (0,0).
+- hardcode cfg numbers
+- restrict to a fixed plane like (X,Y)
+- generate multiple observables
+- use wilson_loop helper
+- use HDF5 or alternative IO
+- silently replace invalid data
+- drop imaginary part prematurely
+- mix NumPy and CuPy incorrectly
+- replace MPI reduction with gather operations
+- implement a generic tensor inference engine
 
-### 11. Do NOT average over MPI ranks directly
 
-MPI must be used to sum local lattice contributions, not to average one scalar per rank.
+Style
 
-The final normalization must be based on the full global lattice volume.
+Write as a computational physics script:
 
-## Optional Extension (comment only)
+- direct
+- minimal
+- readable
+- step-by-step
+- no unnecessary abstraction
 
-Explain how to extend to other planes:
 
-(X,Y), (X,Z), (X,T)
-(Y,Z), (Y,T)
-(Z,T)
+Output
 
-But do not implement them in execution.
+Return exactly one complete Python script.
 
-## Final Instruction
-
-Now generate the Python script following all rules above.
+No explanation outside the code.
