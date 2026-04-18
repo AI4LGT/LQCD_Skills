@@ -39,6 +39,10 @@ $$C_p(\vec{p}; t,0) \approx -\sum_{\vec{x}} e^{-i \vec{p} \cdot \vec{x}} \epsilo
 
 **Step 5 — Einsum** (see layout conventions above):
 ```python
-twopt = numpy.einsum('wtzyx,abc,def,ij,kl,mn,wtzyxikad,wtzyxjlbe,wtzyxnmcf,li->t', phase, epsilon, epsilon, C @ gamma_5, C @ gamma_5, P_plus, S_l, S_l, S_l) + numpy.einsum('wtzyx,abc,def,ij,kl,mn,wtzyximad,wtzyxjlbe,wtzyxnkcf,li->t', phase, epsilon, epsilon, C @ gamma_5, C @ gamma_5, P_plus, S_l, S_l, S_l)
+from opt_einsum import contract
+
+twopt = 0
+twopt += contract('wtzyx,abc,def,ij,kl,mn,wtzyxikad,wtzyxjlbe,wtzyxnmcf,li->t', phase, epsilon, epsilon, C @ gamma_5, C @ gamma_5, P_plus, S_l, S_l, S_l)
+twopt += contract('wtzyx,abc,def,ij,kl,mn,wtzyximad,wtzyxjlbe,wtzyxnkcf,li->t', phase, epsilon, epsilon, C @ gamma_5, C @ gamma_5, P_plus, S_l, S_l, S_l)
 ```
-Note: this expression may carry an extra minus sign depending on the transpose convention of the gamma matrices. The einsum is expensive for baryons — in practice, break it into smaller intermediate contractions to reduce cost.
+Note: this expression may carry an extra minus sign depending on the transpose convention of the gamma matrices. The `contract` is expensive for baryons — in practice, break it into smaller intermediate contractions to reduce cost.

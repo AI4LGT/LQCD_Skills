@@ -56,9 +56,11 @@ To extract the full set of form factors, repeat the calculation for the needed c
 
 **Step 5 — Einsum** (see layout conventions above):
 ```python
+from opt_einsum import contract
+
 # G_seq_dag denotes the sequential light propagator written with the same
 # conjugated spin-color index ordering used in the reference conventions.
-threept = numpy.einsum(
+threept = contract(
     "wtzyx,wtzyxjiba,jk,wtzyxkiab->t",
     phase_q,
     G_seq_dag,

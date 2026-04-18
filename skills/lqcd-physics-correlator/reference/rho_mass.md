@@ -37,16 +37,20 @@ $$C_\rho(\vec{p}; t,0) \approx \frac{1}{3}\sum_i\sum_{\vec{x}} e^{-i \vec{p} \cd
 
 For point source propagator
 ```python
+from opt_einsum import contract
+
 twopt = 0
 for gamma_i in [gamma_1, gamma_2, gamma_3]:
-  twopt += numpy.einsum('wtzyx,wtzyxjiba,jk,wtzyxklba,li->t', phase, S_l.conj(), gamma_5 @ gamma_i, S_l, gamma_i @ gamma_5)
+  twopt += contract('wtzyx,wtzyxjiba,jk,wtzyxklba,li->t', phase, S_l.conj(), gamma_5 @ gamma_i, S_l, gamma_i @ gamma_5)
 twopt /= 3
 ```
 
 For wall source propagator
 ```python
+from opt_einsum import contract
+
 twopt = 0
 for gamma_i in [gamma_1, gamma_2, gamma_3]:
-  twopt += numpy.einsum('wtzyx,wtzyxjiba,jk,wtzyxklba,li->t', phase, S_l_np2.conj(), gamma_5 @ gamma_i, S_l_p1, gamma_i @ gamma_5)
+  twopt += contract('wtzyx,wtzyxjiba,jk,wtzyxklba,li->t', phase, S_l_np2.conj(), gamma_5 @ gamma_i, S_l_p1, gamma_i @ gamma_5)
 twopt /= 3
 ```

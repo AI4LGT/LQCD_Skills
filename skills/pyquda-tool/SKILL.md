@@ -286,8 +286,12 @@ Here we save the smeared propagator in both NumPy binary format and HDF5 format.
 ### Step 7: Contraction to correlator (optional)
 If you need to compute correlators, you can perform contractions of the propagators using NumPy or CuPy's contraction utilities or by manually implementing the necessary spin-color contractions. For example, for a rho two-point correlator:
 ```python
-import cupy as cp
+from opt_einsum import contract
+from pyquda_comm import array
 from pyquda_utils import core, phase_v2, gamma
+
+# backend should be the same as the one used for initialization PyQUDA
+backend = "cupy"
 
 phase = phase_v2.MomentumPhase(latt_info).getPhase([-kx, -ky, -kz], [x0, y0, z0])
 
@@ -298,28 +302,32 @@ gamma_1 = gamma.gamma(1)   # bit 0 = γ₁
 gamma_2 = gamma.gamma(2)   # bit 1 = γ₂
 gamma_3 = gamma.gamma(4)   # bit 2 = γ₃, NOT γ₄
 gamma_5 = gamma.gamma(15)  # all four bits = γ₅
-rho_2pt_1 = cp.einsum('wtzyx,wtzyxjiba,jk,wtzyxklba,li->t', phase.data, propag_sh.data.conj(), gamma_5 @ gamma_1, propag_sh.data, gamma_1.conj().T @ gamma_5)
-rho_2pt_2 = cp.einsum('wtzyx,wtzyxjiba,jk,wtzyxklba,li->t', phase.data, propag_sh.data.conj(), gamma_5 @ gamma_2, propag_sh.data, gamma_2.conj().T @ gamma_5)
-rho_2pt_3 = cp.einsum('wtzyx,wtzyxjiba,jk,wtzyxklba,li->t', phase.data, propag_sh.data.conj(), gamma_5 @ gamma_3, propag_sh.data, gamma_3.conj().T @ gamma_5)
+rho_2pt_1 = contract('wtzyx,wtzyxjiba,jk,wtzyxklba,li->t', phase.data, propag_sh.data.conj(), gamma_5 @ gamma_1, propag_sh.data, gamma_1.conj().T @ gamma_5)
+rho_2pt_2 = contract('wtzyx,wtzyxjiba,jk,wtzyxklba,li->t', phase.data, propag_sh.data.conj(), gamma_5 @ gamma_2, propag_sh.data, gamma_2.conj().T @ gamma_5)
+rho_2pt_3 = contract('wtzyx,wtzyxjiba,jk,wtzyxklba,li->t', phase.data, propag_sh.data.conj(), gamma_5 @ gamma_3, propag_sh.data, gamma_3.conj().T @ gamma_5)
 # Average over the three spatial polarizations of the rho meson
 rho_2pt = (rho_2pt_1 + rho_2pt_2 + rho_2pt_3) / 3
-rho_2pt = core.gatherLattice(rho_2pt, [0, -1, -1, -1])
+rho_2pt = core.gatherLattice(array.arrayAsNumpy(rho_2pt, backend), [0, -1, -1, -1])
 ```
 Please refer to `lqcd-physics-correlator` for more details on how to
 perform contractions for various hadronic correlators. The convention for
-the spin-color indices in the propagator is `(parity, t, z, y, x,
-spin_snk, spin_src, color_snk, color_src)`. The `einsum` function is used
-to perform the necessary contractions to compute the two-point correlator
-for the rho meson. The `phase.data` is applied to account for the momentum
-projection $e^{-i\vec{p}\cdot\vec{x}}$. This is reversed compared with the
-phase applied to the source because of the conjugation in the source
-operator; `lqcd-physics-correlator` explains that sign and phase
-convention. Finally, we gather the lattice data from all MPI ranks to
+the spin-color indices in the propagator is
+`(parity, t, z, y, x, spin_snk, spin_src, color_snk, color_src)`. Note we are
+using the `opt_einsum.contract` instead of `numpy.einsum` or `cupy.einsum` to
+perform the contractions because `opt_einsum` can optimize the contraction order
+and can work with different backends. The `contract` function performs the
+necessary contractions to compute the two-point correlator for the rho meson.
+The `phase.data` is applied to account for the momentum projection
+$e^{-i\vec{p}\cdot\vec{x}}$. This is reversed compared with the phase applied to
+the source because of the conjugation in the source operator;
+`lqcd-physics-correlator` explains that sign and phase convention. Finally, we
+gather the lattice data from all MPI ranks to
 obtain the full correlator in the root rank as a function of time. The
 second argument of `gatherLattice` specifies the dimensions to gather in
 `tzyx` order, where `0` indicates that we want to gather the data in the
 $t$ dimension, and `-1` means performing reduction in all three spatial
-dimensions.
+dimensions. The array passed to `gatherLattice` should be a NumPy array, and
+`array.arrayAsNumpy` is used to transfer the data from GPU to CPU if necessary.
 
 ### Step 8: Save output
 

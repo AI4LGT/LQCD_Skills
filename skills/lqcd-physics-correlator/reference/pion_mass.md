@@ -37,10 +37,14 @@ $$C_\pi(\vec{p}; t,0) \approx \sum_{\vec{x}} e^{-i \vec{p} \cdot \vec{x}} \text{
 
 For point source propagator
 ```python
-twopt = numpy.einsum('wtzyx,wtzyxjiba,wtzyxjiba->t', phase, S_l.conj(), S_l)
+from opt_einsum import contract
+
+twopt = contract('wtzyx,wtzyxjiba,wtzyxjiba->t', phase, S_l.conj(), S_l)
 ```
 
 For wall source propagator
 ```python
-twopt = numpy.einsum('wtzyx,wtzyxjiba,wtzyxjiba->t', phase, S_l_np2.conj(), S_l_p1)
+from opt_einsum import contract
+
+twopt = contract('wtzyx,wtzyxjiba,wtzyxjiba->t', phase, S_l_np2.conj(), S_l_p1)
 ```
