@@ -7,16 +7,26 @@
 We have the corresponding Dirac conjugate operator (creation operator)
   $$\mathcal{O}_{\pi^+}^\dagger = \bar{u} \gamma_4\gamma_5^\dagger\gamma_4 d$$
 
+Using the property of $$\gamma$$ matrix, we obtain:
+  $$\mathcal{O}_{\pi^+}^\dagger = -\bar{u} \gamma_5 d$$
+
 **Step 2 — Correlator**:
   $$C_\pi(\vec{p}; t,0) = \langle \mathcal{O}_{\pi^+}(\vec{p},t) \mathcal{O}^\dagger_{\pi^+}(\vec{p},0) \rangle$$
 
 **Step 3a - Quark fields**: Expand the operator in terms of quark fields and Fourier transform:
   $$C_\pi(\vec{p}; t,0) = \sum_{\vec{x},\vec{y}} e^{-i \vec{p} \cdot (\vec{x} - \vec{y})} \langle \bar{d}(\vec{x},t) \gamma_5 u(\vec{x},t) \bar{u}(\vec{y},0) \gamma_4 \gamma_5^\dagger \gamma_4 d(\vec{y},0) \rangle$$
 
+Using the property of $$\gamma$$ matrix, we obtain:
+  $$C_\pi(\vec{p}; t,0) = -\sum_{\vec{x},\vec{y}} e^{-i \vec{p} \cdot (\vec{x} - \vec{y})} \langle \bar{d}(\vec{x},t) \gamma_5 u(\vec{x},t) \bar{u}(\vec{y},0) \gamma_5 \gamma_4 d(\vec{y},0) \rangle$$
+
 **Step 3b — Wick contraction**:
 One connected diagram (no disconnected pieces for charged pion, and the negative sign arises from the anticommutation of fermion fields):
 
   $$C_\pi(\vec{p}; t,0) = -\sum_{\vec{x},\vec{y}} e^{-i \vec{p} \cdot (\vec{x} - \vec{y})} \text{Tr}[ S_d(\vec{y},0; \vec{x},t) \gamma_5 S_u(\vec{x},t; \vec{y},0) \gamma_4 \gamma_5^\dagger \gamma_4 ]$$
+
+Using the property of $$\gamma$$ matrix, we obtain:
+  $$C_\pi(\vec{p}; t,0) = \sum_{\vec{x},\vec{y}} e^{-i \vec{p} \cdot (\vec{x} - \vec{y})} \text{Tr}[ S_d(\vec{y},0; \vec{x},t) \gamma_5 S_u(\vec{x},t; \vec{y},0)\gamma_5  ]$$
+
 
 **Step 3c - Simplification**:
   1. Apply the $\gamma_5$-hermiticity and the flavor symmetry:
