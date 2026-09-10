@@ -1,0 +1,6 @@
+interface:
+  display_name: "PyQUDA Blending"
+  short_description: "Global-coordinate blended array kernels"
+  default_prompt: "Use $pyquda_blending for audited blending weights, global-coordinate elementals, projected perambulator callbacks, and meson or baryon contractions; require the caller to define the orthogonal stochastic complement, dilution, MPI communicator, solves, and I/O."
+policy:
+  allow_implicit_invocation: true

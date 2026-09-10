@@ -1,0 +1,6 @@
+interface:
+  display_name: "PyQUDA Momentum Smearing"
+  short_description: "Link-phased Wuppertal source/sink smearing"
+  default_prompt: "Use $pyquda_momentum_smear for audited link-phased Wuppertal source, sink, and sequential smearing. Keep smearing modes separate from physical Fourier momentum, audit the downstream dagger before choosing a sequential phase, enforce the one-smear contract, and expose MRHS/restart."
+policy:
+  allow_implicit_invocation: true

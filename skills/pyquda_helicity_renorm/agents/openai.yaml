@@ -1,0 +1,6 @@
+interface:
+  display_name: "PyQUDA Helicity Renormalization"
+  short_description: "Audit legacy nf=3 helicity coefficients"
+  default_prompt: "Use $pyquda_helicity_renorm to audit or adapt the legacy nf=3 helicity matching and RG tables. Require an exact operator-basis, scheme, paper, and equation map before production numerical use."
+policy:
+  allow_implicit_invocation: false

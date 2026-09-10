@@ -1,0 +1,6 @@
+interface:
+  display_name: "PyQUDA HISQ Recovery"
+  short_description: "Staggered-to-naive four-spin reconstruction"
+  default_prompt: "Use $pyquda_hisq_recover for Omega(x) staggered/HISQ-to-naive four-spin reconstruction in Wilson-like storage. Require full source coordinates plus producer-compatible gamma, eta, origin, taste, boundary, and MPI ownership conventions; never describe it as a Wilson-action propagator."
+policy:
+  allow_implicit_invocation: true

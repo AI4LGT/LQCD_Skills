@@ -1,0 +1,6 @@
+interface:
+  display_name: "PyQUDA Quark Renormalization"
+  short_description: "Audit RI-to-MS tables and amputation"
+  default_prompt: "Use $pyquda_quark_renorm for spin-color inversion/amputation or to audit legacy RI-to-MS conversion and running tables. For raw RI projectors choose $pyquda_ri_renorm; require equation-level provenance before using legacy coefficients in production."
+policy:
+  allow_implicit_invocation: false

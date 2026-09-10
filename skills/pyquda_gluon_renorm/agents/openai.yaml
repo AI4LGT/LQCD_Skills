@@ -1,0 +1,6 @@
+interface:
+  display_name: "PyQUDA Gluon Renormalization"
+  short_description: "Bare gauge fields, Fmunu, Wilson lines, FFT"
+  default_prompt: "Use $pyquda_gluon_renorm for bare PyQUDA/CuPy gauge observables. Distinguish gauge-invariant F-W-F from gauge-fixed A_mu or K_mu, select g0 by gauge-action normalization, and do not call a bare result renormalized without a separate prescription."
+policy:
+  allow_implicit_invocation: true

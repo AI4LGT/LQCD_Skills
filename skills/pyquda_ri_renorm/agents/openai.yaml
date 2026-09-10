@@ -1,0 +1,6 @@
+interface:
+  display_name: "PyQUDA RI Renormalization"
+  short_description: "Custom/unmatched RI projector arrays"
+  default_prompt: "Use $pyquda_ri_renorm for gauge-fixed momentum-space array inversion, independent-leg amputation, explicit gamma_mu or qslash projectors, and raw propagator-Zq factors. Preserve the returned custom scheme_identity and unmapped_fail_closed status; never dispatch standard RI/SMOM matching from kinematics alone, and do not claim gauge fixing, QUDA inversion, MPI, fits, or MS-bar conversion."
+policy:
+  allow_implicit_invocation: true

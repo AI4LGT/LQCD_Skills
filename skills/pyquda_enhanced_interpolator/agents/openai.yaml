@@ -1,0 +1,6 @@
+interface:
+  display_name: "PyQUDA Enhanced Interpolators"
+  short_description: "Boosted-hadron operator array kernels"
+  default_prompt: "Use $pyquda_enhanced_interpolator for Euclidean gamma-plus/minus kernels, distinct nucleon source/sink diquarks, local Wick contractions, and same-timeslice spatial reduction; do not claim it constructs propagators, phases, or I/O."
+policy:
+  allow_implicit_invocation: true
